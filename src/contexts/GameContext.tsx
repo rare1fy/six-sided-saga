@@ -1,0 +1,61 @@
+﻿import React from 'react';
+import type { Die, MapNode, Enemy, GameState, Relic } from '../types/game';
+
+export type ToastIcon = 'gold' | 'dice' | 'relic' | 'remove' | 'check' | 'star' | 'shuffle';
+
+export interface ToastOptions {
+  icon?: ToastIcon;
+  relicId?: string;
+}
+
+interface Toast {
+  id: number;
+  message: string;
+  type?: 'info' | 'damage' | 'heal' | 'gold' | 'buff' | string;
+  icon?: ToastIcon;
+  relicId?: string;
+}
+
+export interface GameContextType {
+  // State
+  game: GameState;
+  setGame: React.Dispatch<React.SetStateAction<GameState>>;
+  enemies: Enemy[];
+  setEnemies: React.Dispatch<React.SetStateAction<Enemy[]>>;
+  targetEnemy: Enemy | null;
+  dice: Die[];
+  setDice: React.Dispatch<React.SetStateAction<Die[]>>;
+  showTutorial: boolean;
+  setShowTutorial: React.Dispatch<React.SetStateAction<boolean>>;
+  showHandGuide: boolean;
+  setShowHandGuide: React.Dispatch<React.SetStateAction<boolean>>;
+  showDiceGuide: boolean;
+  setShowDiceGuide: React.Dispatch<React.SetStateAction<boolean>>;
+  rerollFlash: boolean;
+  startingRelicChoices: Relic[];
+  pendingBattleNode: MapNode | null;
+  
+  // Actions
+  startNode: (node: MapNode) => void;
+  startBattle: (node: MapNode | number, overrideWaves?: import('../types/game').BattleWave[]) => void;
+  collectLoot: (id: string) => void;
+  finishLoot: () => void;
+  pickReward: (relic: Relic) => void;
+  nextNode: () => void;
+  toasts: Toast[];
+  addToast: (message: string, type?: 'info' | 'damage' | 'heal' | 'gold' | 'buff', options?: ToastOptions) => void;
+  addLog: (msg: string) => void;
+  handleSelectStartingRelic: (relic: Relic) => void;
+  handleSkipStartingRelic: () => void;
+  resetGame: () => void;
+}
+
+export const GameContext = React.createContext<GameContextType>(null!);
+
+export const useGameContext = () => {
+  const ctx = React.useContext(GameContext);
+  if (!ctx) throw new Error('useGameContext must be used within GameContext.Provider');
+  return ctx;
+};
+
+export type { Toast };

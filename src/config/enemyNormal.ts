@@ -1,0 +1,916 @@
+// [RULES-B2-EXEMPT] 纯数据配置文件：5 章 × 每章 ~10 只小怪的 EnemyConfig + quotes 池，
+// 文件大小随敌人数量线性增长，拆分反而破坏"一章一段"的可读性。
+/**
+ * enemyNormal.ts - 5章普通敌人配置
+ *
+ * 章1: 幽暗森林 — 亡灵/蜘蛛/狼人/树精
+ * 章2: 冰封山脉 — 冰巨人/雪狼/冰元素/霜巫
+ * 章3: 熔岩深渊 — 火元素/熔岩犬/黑铁矮人/地狱火
+ * 章4: 暗影要塞 — 暗影刺客/恶魔卫兵/邪能术士/堕落天使
+ * 章5: 永恒之巅 — 光铸卫士/时光龙/虚空行者/泰坦造物
+ */
+
+import type { EnemyConfig } from './enemyTypes';
+
+// ============================================================
+// 章1: 幽暗森林 — 亡灵/野兽/腐化生物
+// ============================================================
+export const ch1_normals: EnemyConfig[] = [
+  {
+    id: 'forest_ghoul', name: '食尸鬼', emoji: '', chapter: 1,
+    baseHp: 28, baseDmg: 10, category: 'normal', combatType: 'warrior', archetype: 'berserker',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 10 },
+      { type: '攻击', baseValue: 12, description: '撕咬' },
+      { type: '技能', baseValue: 1, description: '虚弱', scalable: false },
+    ]}],
+    quotes: {
+      enter: ['嘎嘎……新鲜的肉……', '从坟墓里爬出来了……'],
+      death: ['骨头……散了……', '回到……土里……'],
+      attack: ['撕！', '咬碎你！', '嘎嘎嘎！'],
+      hurt: ['嘎！', '腐肉……掉了……'],
+      lowHp: ['不……还没吃饱……'],
+    },
+  },
+  {
+    id: 'forest_spider', name: '剧毒蛛母', emoji: '', chapter: 1,
+    baseHp: 18, baseDmg: 6, category: 'normal', combatType: 'ranger', archetype: 'trapper',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 2, description: '剧毒', scalable: false },
+      { type: '攻击', baseValue: 6 },
+      { type: '攻击', baseValue: 6 },
+    ]}],
+    quotes: {
+      enter: ['嘶嘶……陷阱已经布好了……', '（密集的爬行声）'],
+      death: ['嘶……蛛卵……会替我……', '（扭曲倒地）'],
+      attack: ['毒牙！', '吐丝！', '缠住你！'],
+      hurt: ['嘶！', '我的……腿！'],
+      lowHp: ['蛛巢……不会忘记你……'],
+    },
+  },
+  {
+    id: 'forest_treant', name: '腐化树人', emoji: '', chapter: 1,
+    baseHp: 42, baseDmg: 7, category: 'normal', combatType: 'guardian', archetype: 'enforcer',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '防御', baseValue: 8 },
+      { type: '攻击', baseValue: 7 },
+      { type: '防御', baseValue: 6 },
+      { type: '攻击', baseValue: 10, description: '根须缠绕' },
+    ]}],
+    quotes: {
+      enter: ['这片……森林……不欢迎你……', '（树根从地面涌出）'],
+      death: ['森林……会记住……', '倒下了……但种子……已经播下……'],
+      attack: ['根须！', '大地之力！'],
+      hurt: ['树皮……裂了……', '不过是……划痕……'],
+      lowHp: ['我的根……断了……但森林……永存……'],
+    },
+  },
+  {
+    id: 'forest_banshee', name: '哀嚎女妖', emoji: '', chapter: 1,
+    baseHp: 16, baseDmg: 8, category: 'normal', combatType: 'caster', archetype: 'pyromancer',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 1, description: '易伤', scalable: false },
+      { type: '攻击', baseValue: 8 },
+      { type: '技能', baseValue: 1, description: '虚弱', scalable: false },
+    ]}],
+    quotes: {
+      enter: ['啊啊啊——！', '听到了吗……死亡的歌声……'],
+      death: ['终于……安息了……', '（哀鸣渐弱）'],
+      attack: ['尖叫！', '死亡之歌！', '颤抖吧！'],
+      hurt: ['（刺耳尖啸）', '痛苦……是我的养分……'],
+      lowHp: ['最后……一曲……送你上路！'],
+    },
+  },
+  {
+    id: 'forest_wolf_priest', name: '月光狼灵', emoji: '', chapter: 1,
+    baseHp: 20, baseDmg: 7, category: 'normal', combatType: 'priest', archetype: 'healer',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 2, description: '剧毒', scalable: false },
+      { type: '技能', baseValue: 1, description: '易伤', scalable: false },
+      { type: '攻击', baseValue: 7 },
+    ]}],
+    quotes: {
+      enter: ['呜——月光指引着我……', '嗅到了……猎物的气息……'],
+      death: ['月光……暗了……', '呜……（倒下）'],
+      attack: ['狼牙！', '月光之噬！'],
+      hurt: ['嗷！', '这……不可能……'],
+      lowHp: ['月光……给我力量……'],
+    },
+  },
+  // [CH1-EXPANSION 2026-05-09] 下面 5 只为章1每职业 +1 扩充：
+  {
+    id: 'forest_bone_reaver', name: '骸骨狂战', emoji: '', chapter: 1,
+    baseHp: 32, baseDmg: 11, category: 'normal', combatType: 'warrior', archetype: 'berserker',
+    drops: { gold: 22, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 11 },
+      { type: '攻击', baseValue: 14, description: '狂暴劈砍' },
+      { type: '防御', baseValue: 4 },
+    ]}],
+    quotes: {
+      enter: ['骨刃——饥渴已久！', '（咔咔咔骨节作响）'],
+      death: ['散架……了……', '骨头归……尘土……', '风干的骨头，终究要散。'],
+      attack: ['劈！', '斩！', '碾碎你！'],
+      hurt: ['咔！', '骨裂……也算伤？', '皮外伤。'],
+      lowHp: ['骨髓……最后一滴，献给这场厮杀！'],
+    },
+  },
+  {
+    id: 'forest_poison_sprite', name: '毒雾林精', emoji: '', chapter: 1,
+    baseHp: 16, baseDmg: 5, category: 'normal', combatType: 'ranger', archetype: 'trapper',
+    drops: { gold: 22, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 3, description: '剧毒', scalable: false },
+      { type: '攻击', baseValue: 5 },
+      { type: '技能', baseValue: 2, description: '剧毒', scalable: false },
+    ]}],
+    quotes: {
+      enter: ['（雾气弥漫）', '吸一口……就够了。'],
+      death: ['雾……散了……', '回归根须……', '下一阵风，我还会来。'],
+      attack: ['吐毒！', '雾刺！', '呼——'],
+      hurt: ['呃……', '叶片被撕了？'],
+      lowHp: ['最后一口毒雾——全吐出来！'],
+    },
+  },
+  {
+    id: 'forest_moss_golem', name: '苔岩泥像', emoji: '', chapter: 1,
+    baseHp: 48, baseDmg: 6, category: 'normal', combatType: 'guardian', archetype: 'bulwark',
+    drops: { gold: 22, relic: false },
+    phases: [{ actions: [
+      { type: '防御', baseValue: 10 },
+      { type: '攻击', baseValue: 6 },
+      { type: '防御', baseValue: 8 },
+      { type: '攻击', baseValue: 9, description: '石拳' },
+    ]}],
+    quotes: {
+      enter: ['……（沉重的脚步）', '土……吞噬入侵者。'],
+      death: ['碎……', '归于土……', '（轰然倒塌）'],
+      attack: ['砸！', '碾！'],
+      hurt: ['……（岩石裂缝）', '一点小伤。'],
+      lowHp: ['最后的岩石……也要还击！'],
+    },
+  },
+  {
+    id: 'forest_wraith_cultist', name: '幽冥诅祝', emoji: '', chapter: 1,
+    baseHp: 18, baseDmg: 7, category: 'normal', combatType: 'caster', archetype: 'cursemaster',
+    drops: { gold: 22, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 2, description: '易伤', scalable: false },
+      { type: '攻击', baseValue: 7 },
+      { type: '技能', baseValue: 1, description: '虚弱', scalable: false },
+    ]}],
+    quotes: {
+      enter: ['诅咒……降临！', '（低声吟诵）'],
+      death: ['咒文……断了……', '回归虚无……', '下一次仪式……我还会被召唤……'],
+      attack: ['诅咒！', '幽冥之击！', '灵魂剥离！'],
+      hurt: ['啊！', '仪式……被打断……'],
+      lowHp: ['黑暗……收我为仆吧——！'],
+    },
+  },
+  {
+    id: 'forest_old_willow', name: '老槐祭司', emoji: '', chapter: 1,
+    baseHp: 22, baseDmg: 6, category: 'normal', combatType: 'priest', archetype: 'inquisitor',
+    drops: { gold: 22, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 2, description: '剧毒', scalable: false },
+      { type: '防御', baseValue: 6 },
+      { type: '技能', baseValue: 1, description: '易伤', scalable: false },
+      { type: '攻击', baseValue: 6 },
+    ]}],
+    quotes: {
+      enter: ['孩儿们，饮下我的树液……', '古老的森林，借我一分力量。'],
+      death: ['枝叶……枯萎……', '根须……缩回……', '四季终究会再循环……'],
+      attack: ['树液灌注！', '藤鞭！'],
+      hurt: ['树皮……脱落……', '一点小伤不要紧。'],
+      lowHp: ['最后一片叶子——化作诅咒！'],
+    },
+  },
+];
+
+// ============================================================
+// 章2: 冰封山脉 — 冰霜生物
+// ============================================================
+export const ch2_normals: EnemyConfig[] = [
+  {
+    id: 'ice_yeti', name: '雪原雪人', emoji: '', chapter: 2,
+    baseHp: 36, baseDmg: 9, category: 'normal', combatType: 'warrior', archetype: 'striker',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 9 },
+      { type: '攻击', baseValue: 11, description: '冰拳' },
+    ]}],
+    quotes: {
+      enter: ['吼————！', '（地面在颤抖）'],
+      death: ['吼……（倒地，掀起雪浪）', '冰……碎了……'],
+      attack: ['砸！', '冰拳！', '吼！'],
+      hurt: ['吼！疼！', '（愤怒咆哮）'],
+      lowHp: ['吼……不会……倒下……'],
+    },
+  },
+  {
+    id: 'ice_mage', name: '霜寒女巫', emoji: '', chapter: 2,
+    baseHp: 18, baseDmg: 4, category: 'normal', combatType: 'caster', archetype: 'cursemaster',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 1, description: '冻结', scalable: false },
+      { type: '攻击', baseValue: 6 },
+      { type: '技能', baseValue: 2, description: '虚弱', scalable: false },
+    ]}],
+    quotes: {
+      enter: ['冰霜……会冻结一切……', '寒冬……已经来临……'],
+      death: ['冰……碎了……但寒意……永存……', '（冰晶四散）'],
+      attack: ['冰锥！', '寒冰箭！', '冻住！'],
+      hurt: ['冰盾……裂了……', '不……可能……'],
+      lowHp: ['暴风雪……最后的咏唱……'],
+    },
+  },
+  {
+    id: 'ice_wolf', name: '霜鬃狼', emoji: '', chapter: 2,
+    baseHp: 22, baseDmg: 5, category: 'normal', combatType: 'ranger', archetype: 'hunter',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 5 },
+      { type: '攻击', baseValue: 7, description: '冰霜撕咬' },
+      { type: '技能', baseValue: 1, description: '灼烧', scalable: false },
+    ]}],
+    quotes: {
+      enter: ['（低沉的咆哮）', '嗅到了……温暖的血……'],
+      death: ['呜……（倒在雪中）', '（低吟消散）'],
+      attack: ['嗷！', '撕咬！', '冰牙！'],
+      hurt: ['嗷呜！', '（退后一步，龇牙）'],
+      lowHp: ['呜……群狼……会替我报仇……'],
+    },
+  },
+  {
+    id: 'ice_golem', name: '寒冰石像', emoji: '', chapter: 2,
+    baseHp: 44, baseDmg: 4, category: 'normal', combatType: 'guardian', archetype: 'bulwark',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '防御', baseValue: 10 },
+      { type: '攻击', baseValue: 5 },
+      { type: '防御', baseValue: 8 },
+    ]}],
+    quotes: {
+      enter: ['（冰晶嘎吱作响）', '不许……通过……'],
+      death: ['（碎裂成冰块）', '使命……完成……'],
+      attack: ['碾压！', '冰拳！'],
+      hurt: ['裂缝……', '（冰块脱落）'],
+      lowHp: ['还能……守住……'],
+    },
+  },
+  // [CH2-EXPANSION 2026-05-09] 章2 扩充：每职业 +1 + priest×2 补空缺
+  {
+    id: 'ice_storm_wolf', name: '暴风战狼', emoji: '', chapter: 2,
+    baseHp: 40, baseDmg: 10, category: 'normal', combatType: 'warrior', archetype: 'striker',
+    drops: { gold: 22, relic: false },
+    // [2026-05-09] 移除"力量"装饰 action：warrior 现走 bloodFury 自动递增（受伤累 +1 ATK）
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 10 },
+      { type: '攻击', baseValue: 13, description: '暴风突袭' },
+    ]}],
+    quotes: {
+      enter: ['嗷——风雪为我引路！', '（狂吠声回荡）'],
+      death: ['风停了……', '回归风雪……', '下一场暴风雪，我还会来。'],
+      attack: ['撕咬！', '突袭！', '嗷呜！'],
+      hurt: ['嗷！', '一点皮毛伤。'],
+      lowHp: ['最后一阵风雪——卷起全部力量！'],
+    },
+  },
+  {
+    id: 'ice_crystal_archer', name: '冰晶射手', emoji: '', chapter: 2,
+    baseHp: 20, baseDmg: 7, category: 'normal', combatType: 'ranger', archetype: 'marksman',
+    drops: { gold: 22, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 7 },
+      { type: '攻击', baseValue: 9, description: '冰棱射击' },
+      { type: '技能', baseValue: 1, description: '虚弱', scalable: false },
+    ]}],
+    quotes: {
+      enter: ['箭已上弦——', '（冰棱折射出寒光）'],
+      death: ['箭袋空了……', '冰棱融化……', '下次，我会在更远处等你。'],
+      attack: ['冰棱！', '穿透！', '咻——'],
+      hurt: ['擦伤。', '距离估算出错了？'],
+      lowHp: ['最后一箭——必须结霜。'],
+    },
+  },
+  {
+    id: 'ice_avalanche_watch', name: '雪峦守望', emoji: '', chapter: 2,
+    baseHp: 54, baseDmg: 6, category: 'normal', combatType: 'guardian', archetype: 'enforcer',
+    drops: { gold: 22, relic: false },
+    phases: [{ actions: [
+      { type: '防御', baseValue: 12 },
+      { type: '攻击', baseValue: 6 },
+      { type: '防御', baseValue: 10 },
+      { type: '攻击', baseValue: 8, description: '雪崩重击' },
+    ]}],
+    quotes: {
+      enter: ['……山的一部分，动了。', '（冰壳碎裂声）'],
+      death: ['崩……', '归于雪中……', '（轰然倒塌）'],
+      attack: ['雪崩！', '重击！'],
+      hurt: ['（冰壳裂缝）', '一点小伤。'],
+      lowHp: ['最后的冰壳——也要砸碎他！'],
+    },
+  },
+  {
+    id: 'ice_coffin_wraith', name: '冰棺咒灵', emoji: '', chapter: 2,
+    baseHp: 20, baseDmg: 8, category: 'normal', combatType: 'caster', archetype: 'cursemaster',
+    drops: { gold: 22, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 2, description: '易伤', scalable: false },
+      { type: '攻击', baseValue: 8 },
+      { type: '技能', baseValue: 1, description: '虚弱', scalable: false },
+    ]}],
+    quotes: {
+      enter: ['寒气——侵骨。', '（冰棺中传出低语）'],
+      death: ['咒灵散了……', '回归冰棺……', '冰层下，我还会再睡去……'],
+      attack: ['冻咒！', '霜刃！', '灵魂剥离！'],
+      hurt: ['啊——！', '寒意被扰了？'],
+      lowHp: ['全部寒意——凝成最后一击！'],
+    },
+  },
+  {
+    id: 'ice_frost_elder', name: '霜祭冰尊', emoji: '', chapter: 2,
+    baseHp: 26, baseDmg: 6, category: 'normal', combatType: 'priest', archetype: 'healer',
+    drops: { gold: 22, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 2, description: '易伤', scalable: false },
+      { type: '防御', baseValue: 8 },
+      { type: '技能', baseValue: 1, description: '虚弱', scalable: false },
+      { type: '攻击', baseValue: 6 },
+    ]}],
+    quotes: {
+      enter: ['霜之神啊——请饮下鲜血。', '（低声吟唱）'],
+      death: ['祭坛……冷了……', '神……回避了我……', '下一场冬夜，我还会敬献……'],
+      attack: ['霜之律令！', '冻骨之触！'],
+      hurt: ['啊！', '仪式——被打断了？'],
+      lowHp: ['献祭吧——用我自己的寒骨！'],
+    },
+  },
+  {
+    id: 'ice_holy_bishop', name: '圣冰牧首', emoji: '', chapter: 2,
+    baseHp: 30, baseDmg: 5, category: 'normal', combatType: 'priest', archetype: 'inquisitor',
+    drops: { gold: 22, relic: false },
+    phases: [{ actions: [
+      { type: '防御', baseValue: 10 },
+      { type: '技能', baseValue: 2, description: '剧毒', scalable: false },
+      { type: '技能', baseValue: 1, description: '虚弱', scalable: false },
+      { type: '攻击', baseValue: 5 },
+    ]}],
+    quotes: {
+      enter: ['圣冰之名——净化你。', '（颂圣诗）'],
+      death: ['诗篇……断章……', '圣冰……融化……', '神的注视……也会移开……'],
+      attack: ['圣冰审判！', '圣咏！'],
+      hurt: ['啊！', '圣服被污了。'],
+      lowHp: ['全部圣咏——凝成审判！'],
+    },
+  },
+];
+
+// ============================================================
+// 章3: 熔岩深渊 — 火焰/恶魔生物
+// ============================================================
+export const ch3_normals: EnemyConfig[] = [
+  {
+    id: 'lava_hound', name: '地狱火犬', emoji: '', chapter: 3,
+    baseHp: 30, baseDmg: 8, category: 'normal', combatType: 'warrior', archetype: 'berserker',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 8 },
+      { type: '攻击', baseValue: 10, description: '烈焰撕咬' },
+      { type: '技能', baseValue: 2, description: '灼烧', scalable: false },
+    ]}],
+    quotes: {
+      enter: ['（烈焰从口中喷出）', '吼！猎物！'],
+      death: ['（化为灰烬）', '火……灭了……'],
+      attack: ['烈焰！', '烧！', '吞噬！'],
+      hurt: ['（痛苦嚎叫）', '嗷！'],
+      lowHp: ['最后……一口火焰……'],
+    },
+  },
+  {
+    id: 'lava_imp', name: '小恶魔', emoji: '', chapter: 3,
+    baseHp: 16, baseDmg: 4, category: 'normal', combatType: 'caster', archetype: 'pyromancer',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 2, description: '灼烧', scalable: false },
+      { type: '攻击', baseValue: 5 },
+      { type: '技能', baseValue: 1, description: '易伤', scalable: false },
+      { type: '攻击', baseValue: 6, description: '火球' },
+    ]}],
+    quotes: {
+      enter: ['嘻嘻嘻！又来送死的！', '火焰……是最好的玩具！'],
+      death: ['嘻……不好玩了……', '（砰——消散）'],
+      attack: ['接火球！', '嘻嘻！烫吧！', '燃烧吧！'],
+      hurt: ['哎呀！', '嘻……你打得到我？'],
+      lowHp: ['不行了……要逃了……才怪！吃火球！'],
+    },
+  },
+  {
+    id: 'lava_guardian', name: '黑铁卫士', emoji: '', chapter: 3,
+    baseHp: 48, baseDmg: 5, category: 'normal', combatType: 'guardian', archetype: 'bulwark',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '防御', baseValue: 12 },
+      { type: '攻击', baseValue: 6 },
+      { type: '防御', baseValue: 8 },
+      { type: '攻击', baseValue: 8, description: '锻造重击' },
+    ]}],
+    quotes: {
+      enter: ['黑铁之盾，坚不可摧！', '没有通行令，不许过！'],
+      death: ['盾……碎了……', '黑铁……不灭……（倒下）'],
+      attack: ['锤击！', '黑铁之力！'],
+      hurt: ['叮！', '铁甲……凹了？'],
+      lowHp: ['只要……盾还在……就不会倒！'],
+    },
+  },
+  {
+    id: 'lava_shaman', name: '火焰萨满', emoji: '', chapter: 3,
+    baseHp: 22, baseDmg: 3, category: 'normal', combatType: 'priest', archetype: 'healer',
+    drops: { gold: 20, relic: false },
+    // [2026-05-09] priest 不直接打攻击伤害；description 仅作 intent 提示。
+    // 实际行为由 executePriestSkill 决定（治疗→自疗→护甲祝福→减益）。
+    phases: [{ actions: [
+      { type: '技能', baseValue: 2, description: '灼烧', scalable: false },
+      { type: '技能', baseValue: 1, description: '护甲祝福', scalable: false },
+      { type: '攻击', baseValue: 5 },
+    ]}],
+    quotes: {
+      enter: ['烈焰之灵……降临吧！', '火焰赐予我力量！'],
+      death: ['火灵……离开了我……', '（火焰熄灭）'],
+      attack: ['烈焰冲击！', '焚烧！'],
+      hurt: ['火盾……碎了……', '灵体……动摇了……'],
+      lowHp: ['最后的祈祷……烈焰之怒！'],
+    },
+  },
+  // [CH3-EXPANSION 2026-05-09] 章3 每职业 +1 + priest×2
+  {
+    id: 'lava_bruiser', name: '熔岩重锤兵', emoji: '', chapter: 3,
+    baseHp: 38, baseDmg: 10, category: 'normal', combatType: 'warrior', archetype: 'striker',
+    drops: { gold: 24, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 10 },
+      { type: '技能', baseValue: 2, description: '灼烧', scalable: false },
+      { type: '攻击', baseValue: 13, description: '熔铁重击' },
+    ]}],
+    quotes: {
+      enter: ['熔铁在沸！', '（锤柄冒烟）'],
+      death: ['熔……冷了……', '锤……化铁水……', '下次铸造，我还会站起来。'],
+      attack: ['铁砸！', '熔击！', '烫——'],
+      hurt: ['火花迸溅——不算伤。', '铁皮还厚着。'],
+      lowHp: ['熔心最后一击——全融了你！'],
+    },
+  },
+  {
+    id: 'lava_sparkshooter', name: '火星箭手', emoji: '', chapter: 3,
+    baseHp: 22, baseDmg: 8, category: 'normal', combatType: 'ranger', archetype: 'trapper',
+    drops: { gold: 24, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 8 },
+      { type: '技能', baseValue: 2, description: '灼烧', scalable: false },
+      { type: '攻击', baseValue: 11, description: '火星箭' },
+    ]}],
+    quotes: {
+      enter: ['火种——点燃！', '（弦已拉满）'],
+      death: ['火种……灭了……', '箭袋烧没了……', '下一轮燃料，我还会回来。'],
+      attack: ['火星！', '燃穿！', '咻——'],
+      hurt: ['擦伤。', '我低估了你的速度。'],
+      lowHp: ['最后一支——火种全注入！'],
+    },
+  },
+  {
+    id: 'lava_warden', name: '黑铁哨卫', emoji: '', chapter: 3,
+    baseHp: 52, baseDmg: 6, category: 'normal', combatType: 'guardian', archetype: 'enforcer',
+    drops: { gold: 24, relic: false },
+    phases: [{ actions: [
+      { type: '防御', baseValue: 12 },
+      { type: '攻击', baseValue: 6 },
+      { type: '防御', baseValue: 10 },
+      { type: '攻击', baseValue: 9, description: '铁盾撞击' },
+    ]}],
+    quotes: {
+      enter: ['……（盾牌撞地）', '一步不让。'],
+      death: ['盾……裂了……', '归于铁砧……', '（塌陷）'],
+      attack: ['盾撞！', '砸！'],
+      hurt: ['铁皮厚着。', '一层装甲，十层脾气。'],
+      lowHp: ['最后一盾——碎也要砸他！'],
+    },
+  },
+  {
+    id: 'lava_fire_mage', name: '焚心法师', emoji: '', chapter: 3,
+    baseHp: 22, baseDmg: 9, category: 'normal', combatType: 'caster', archetype: 'pyromancer',
+    drops: { gold: 24, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 3, description: '灼烧', scalable: false },
+      { type: '攻击', baseValue: 9 },
+      { type: '技能', baseValue: 1, description: '易伤', scalable: false },
+    ]}],
+    quotes: {
+      enter: ['焚——心！', '（焰语低吟）'],
+      death: ['法术……回火……', '心头火——熄了……', '下次重铸灵魂……我还会烧你。'],
+      attack: ['焚心！', '炎狱！', '焰尖刺！'],
+      hurt: ['啊！', '咒文——被烫断？'],
+      lowHp: ['最后一缕——焚尽你！'],
+    },
+  },
+  {
+    id: 'lava_ember_priest', name: '熔心祭司', emoji: '', chapter: 3,
+    baseHp: 28, baseDmg: 6, category: 'normal', combatType: 'priest', archetype: 'healer',
+    drops: { gold: 24, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 2, description: '灼烧', scalable: false },
+      { type: '防御', baseValue: 8 },
+      { type: '技能', baseValue: 1, description: '虚弱', scalable: false },
+      { type: '攻击', baseValue: 6 },
+    ]}],
+    quotes: {
+      enter: ['火神——受我奉献。', '（炭盆燃起）'],
+      death: ['火神……转身了……', '炭盆……冷了……', '余烬里，我还会重新站起。'],
+      attack: ['熔心之礼！', '炎骨刃！'],
+      hurt: ['啊——！', '仪式——被扰？'],
+      lowHp: ['以我热血——唤火神降临！'],
+    },
+  },
+  {
+    id: 'lava_cinder_oracle', name: '余烬圣司', emoji: '', chapter: 3,
+    baseHp: 32, baseDmg: 5, category: 'normal', combatType: 'priest', archetype: 'inquisitor',
+    drops: { gold: 24, relic: false },
+    phases: [{ actions: [
+      { type: '防御', baseValue: 10 },
+      { type: '技能', baseValue: 2, description: '灼烧', scalable: false },
+      { type: '技能', baseValue: 1, description: '虚弱', scalable: false },
+      { type: '攻击', baseValue: 5 },
+    ]}],
+    quotes: {
+      enter: ['余烬——开口了。', '（经文在火中显形）'],
+      death: ['经文……化灰……', '火神……不应……', '灰烬里，我还能听到远方的钟声。'],
+      attack: ['余烬审判！', '炭骨刃！'],
+      hurt: ['啊！', '圣书烫着手，但不曾合上。'],
+      lowHp: ['最后一页经文——全部焚化为刃！'],
+    },
+  },
+];
+
+// ============================================================
+// 章4: 暗影要塞 — 恶魔/堕落生物
+// ============================================================
+export const ch4_normals: EnemyConfig[] = [
+  {
+    id: 'shadow_assassin', name: '暗影刺客', emoji: '', chapter: 4,
+    baseHp: 24, baseDmg: 12, category: 'normal', combatType: 'ranger', archetype: 'marksman',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 12, description: '背刺' },
+      { type: '技能', baseValue: 2, description: '剧毒', scalable: false },
+      { type: '攻击', baseValue: 8 },
+    ]}],
+    quotes: {
+      enter: ['（从阴影中浮现）', '你……看不见我……'],
+      death: ['影子……消散了……', '（无声倒下）'],
+      attack: ['背刺！', '影杀！', '无声之刃！'],
+      hurt: ['嘶……被发现了……', '不……可能……'],
+      lowHp: ['影遁……最后一击……'],
+    },
+  },
+  {
+    id: 'shadow_felguard', name: '邪能卫兵', emoji: '', chapter: 4,
+    baseHp: 46, baseDmg: 6, category: 'normal', combatType: 'guardian', archetype: 'enforcer',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 7 },
+      { type: '防御', baseValue: 14 },
+      { type: '攻击', baseValue: 9, description: '邪能重斩' },
+    ]}],
+    quotes: {
+      enter: ['受主人之命……消灭一切入侵者！', '邪能……流淌在我的血脉中！'],
+      death: ['主人……恕我……', '邪能……回归虚空……'],
+      attack: ['邪能斩！', '毁灭！', '碾碎你！'],
+      hurt: ['邪能护甲……', '不过如此……'],
+      lowHp: ['主人的力量……赐予我……最后一击！'],
+    },
+  },
+  {
+    id: 'shadow_warlock', name: '邪能术士', emoji: '', chapter: 4,
+    baseHp: 20, baseDmg: 5, category: 'normal', combatType: 'caster', archetype: 'toxicologist',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 2, description: '剧毒', scalable: false },
+      { type: '攻击', baseValue: 6 },
+      { type: '技能', baseValue: 2, description: '灼烧', scalable: false },
+      { type: '攻击', baseValue: 7, description: '暗影箭' },
+    ]}],
+    quotes: {
+      enter: ['邪能……是最强大的力量！', '痛苦……才刚刚开始……'],
+      death: ['不……我的灵魂……', '邪能……反噬了……'],
+      attack: ['暗影箭！', '燃烧吧！', '腐蚀！'],
+      hurt: ['灵魂石……碎了……', '不可能……我的结界……'],
+      lowHp: ['生命分流！用你的生命……延续我的！'],
+    },
+  },
+  {
+    id: 'shadow_knight', name: '堕落死亡骑士', emoji: '', chapter: 4,
+    baseHp: 34, baseDmg: 10, category: 'normal', combatType: 'warrior', archetype: 'berserker',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 10 },
+      { type: '技能', baseValue: 1, description: '虚弱', scalable: false },
+      { type: '攻击', baseValue: 12, description: '凋零打击' },
+    ]}],
+    quotes: {
+      enter: ['曾经……我也是光明的骑士……', '背叛了光……便无路可退……'],
+      death: ['光……我又看到了……光……', '（黑色铠甲碎裂）'],
+      attack: ['凋零！', '黑暗之力！', '受死吧！'],
+      hurt: ['这具身体……已经不怕痛了……', '无用的抵抗……'],
+      lowHp: ['即便倒下……黑暗……也不会消失……'],
+    },
+  },
+  // [CH4-EXPANSION 2026-05-09] 章4 每职业 +1 + priest×2
+  {
+    id: 'shadow_reaver', name: '虚空狂徒', emoji: '', chapter: 4,
+    baseHp: 40, baseDmg: 11, category: 'normal', combatType: 'warrior', archetype: 'berserker',
+    drops: { gold: 26, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 11 },
+      { type: '攻击', baseValue: 14, description: '虚空撕扯' },
+    ]}],
+    quotes: {
+      enter: ['虚空——在我身后蠕动。', '（扭曲的笑声）'],
+      death: ['虚空……吞回了我……', '原来……我只是它的一爪……', '下一次……我会更完整地出现……'],
+      attack: ['虚空斩！', '撕！', '噬！'],
+      hurt: ['肉身？我早就没这玩意。', '痛感……提醒我还活着。'],
+      lowHp: ['用虚空的最后一爪——报复你！'],
+    },
+  },
+  {
+    id: 'shadow_crossbow', name: '邪能弩手', emoji: '', chapter: 4,
+    baseHp: 26, baseDmg: 10, category: 'normal', combatType: 'ranger', archetype: 'marksman',
+    drops: { gold: 26, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 10 },
+      { type: '技能', baseValue: 2, description: '易伤', scalable: false },
+      { type: '攻击', baseValue: 12, description: '邪能穿透' },
+    ]}],
+    quotes: {
+      enter: ['准星——对准了。', '（邪能在弩箭上流动）'],
+      death: ['弩弦断了……', '没瞄准核心……可惜……', '下次我会拉更满。'],
+      attack: ['穿！', '破甲！', '咻——'],
+      hurt: ['擦伤而已。', '距离我算错了一步。'],
+      lowHp: ['最后一箭——浸满邪能！'],
+    },
+  },
+  {
+    id: 'shadow_gatekeeper', name: '深渊守门', emoji: '', chapter: 4,
+    baseHp: 58, baseDmg: 6, category: 'normal', combatType: 'guardian', archetype: 'bulwark',
+    drops: { gold: 26, relic: false },
+    phases: [{ actions: [
+      { type: '防御', baseValue: 14 },
+      { type: '攻击', baseValue: 6 },
+      { type: '防御', baseValue: 12 },
+      { type: '攻击', baseValue: 10, description: '深渊撞击' },
+    ]}],
+    quotes: {
+      enter: ['门后——是你进不去的世界。', '（巨大的叩门声）'],
+      death: ['门……关上了……', '无法守护了……', '（跪地崩解）'],
+      attack: ['门锤！', '撞！'],
+      hurt: ['护甲松了两片。', '门还在。', '……哼。'],
+      lowHp: ['最后一击——把门带着他一起砸塌！'],
+    },
+  },
+  {
+    id: 'shadow_oracle', name: '虚空卜者', emoji: '', chapter: 4,
+    baseHp: 22, baseDmg: 8, category: 'normal', combatType: 'caster', archetype: 'cursemaster',
+    drops: { gold: 26, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 2, description: '易伤', scalable: false },
+      { type: '攻击', baseValue: 8 },
+      { type: '技能', baseValue: 1, description: '虚弱', scalable: false },
+    ]}],
+    quotes: {
+      enter: ['卜辞已出——你的结局，是\'死\'。', '（虚空之眼睁开）'],
+      death: ['卜辞……错了？……', '虚空……也会欺骗我……', '下一次占卜……我会多问一次……'],
+      attack: ['卜辞！', '虚空之眼！', '注视——'],
+      hurt: ['卜辞……被扰？', '数据——重新校准。'],
+      lowHp: ['最后的卜辞——全赌你死！'],
+    },
+  },
+  {
+    id: 'shadow_sin_priest', name: '堕落司祭', emoji: '', chapter: 4,
+    baseHp: 28, baseDmg: 6, category: 'normal', combatType: 'priest', archetype: 'inquisitor',
+    drops: { gold: 26, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 2, description: '剧毒', scalable: false },
+      { type: '防御', baseValue: 8 },
+      { type: '技能', baseValue: 1, description: '易伤', scalable: false },
+      { type: '攻击', baseValue: 6 },
+    ]}],
+    quotes: {
+      enter: ['罪——是信仰的另一张脸。', '（黑色圣水泼洒）'],
+      death: ['告解……被撤回了……', '罪——无人接续……', '下次仪式，我还会被选中……'],
+      attack: ['罪刃！', '堕落之咒！'],
+      hurt: ['啊——！', '祭袍破了一角——不影响。'],
+      lowHp: ['以我罪身——完成最后的献祭！'],
+    },
+  },
+  {
+    id: 'shadow_void_prophet', name: '渊影预言者', emoji: '', chapter: 4,
+    baseHp: 32, baseDmg: 5, category: 'normal', combatType: 'priest', archetype: 'inquisitor',
+    drops: { gold: 26, relic: false },
+    phases: [{ actions: [
+      { type: '防御', baseValue: 10 },
+      { type: '技能', baseValue: 2, description: '剧毒', scalable: false },
+      { type: '技能', baseValue: 2, description: '易伤', scalable: false },
+      { type: '攻击', baseValue: 5 },
+    ]}],
+    quotes: {
+      enter: ['预言——已写在你的影子里。', '（虚空经文滴水）'],
+      death: ['预言……错了……', '虚空……也会说谎？……', '下一本经书，我还会被翻开……'],
+      attack: ['预言之刃！', '影咏！'],
+      hurt: ['啊！', '经书尚未合上。'],
+      lowHp: ['最后一段预言——必然应验！'],
+    },
+  },
+];
+
+// ============================================================
+// 章5: 永恒之巅 — 光铸/泰坦/时光造物
+// ============================================================
+export const ch5_normals: EnemyConfig[] = [
+  {
+    id: 'eternal_sentinel', name: '光铸哨兵', emoji: '', chapter: 5,
+    baseHp: 40, baseDmg: 8, category: 'normal', combatType: 'guardian', archetype: 'bulwark',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '防御', baseValue: 14 },
+      { type: '攻击', baseValue: 8 },
+      { type: '防御', baseValue: 10 },
+      { type: '攻击', baseValue: 10, description: '圣光裁决' },
+    ]}],
+    quotes: {
+      enter: ['此地……不可侵犯。', '以泰坦之名——退下！'],
+      death: ['任务……失败……', '光……指引我……回家……'],
+      attack: ['裁决！', '净化！', '圣光之锤！'],
+      hurt: ['圣光护盾……动摇了……', '不过是……考验……'],
+      lowHp: ['即使倒下……光明……永不熄灭……'],
+    },
+  },
+  {
+    id: 'eternal_chrono', name: '时光龙人', emoji: '', chapter: 5,
+    baseHp: 26, baseDmg: 7, category: 'normal', combatType: 'caster', archetype: 'cursemaster',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 2, description: '虚弱', scalable: false },
+      { type: '攻击', baseValue: 8, description: '时光冲击' },
+      { type: '技能', baseValue: 1, description: '冻结', scalable: false },
+    ]}],
+    quotes: {
+      enter: ['你的时间线……出了偏差……', '过去、现在、未来……我都能看见……'],
+      death: ['时间线……修复了……', '这个结果……也在预料之中……'],
+      attack: ['时光逆转！', '沙漏之力！', '时间停止！'],
+      hurt: ['时间流……紊乱了……', '这不在……预言中……'],
+      lowHp: ['最后的沙粒……也快流尽了……'],
+    },
+  },
+  {
+    id: 'eternal_archer', name: '星界游侠', emoji: '', chapter: 5,
+    baseHp: 22, baseDmg: 10, category: 'normal', combatType: 'ranger', archetype: 'marksman',
+    drops: { gold: 20, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 10 },
+      { type: '攻击', baseValue: 12, description: '星辰之箭' },
+      { type: '技能', baseValue: 1, description: '易伤', scalable: false },
+    ]}],
+    quotes: {
+      enter: ['星光……指引我的箭矢……', '（弓弦轻响）'],
+      death: ['星辰……暗了……', '（化为星尘）'],
+      attack: ['星箭！', '穿透！', '星光之雨！'],
+      hurt: ['嘶……', '星光……偏移了……'],
+      lowHp: ['最后一箭……献给星辰……'],
+    },
+  },
+  {
+    id: 'eternal_priest', name: '泰坦祭司', emoji: '', chapter: 5,
+    baseHp: 24, baseDmg: 3, category: 'normal', combatType: 'priest', archetype: 'healer',
+    drops: { gold: 20, relic: false },
+    // [2026-05-09] priest 不直接打攻击伤害；description 仅作 intent 提示。
+    phases: [{ actions: [
+      { type: '技能', baseValue: 2, description: '护甲祝福', scalable: false },
+      { type: '技能', baseValue: 1, description: '易伤', scalable: false },
+      { type: '攻击', baseValue: 6, description: '圣光惩击' },
+    ]}],
+    quotes: {
+      enter: ['泰坦的意志……不容亵渎。', '圣光……会审判一切。'],
+      death: ['泰坦……我……回来了……', '（光芒消散）'],
+      attack: ['惩击！', '圣光！', '泰坦之怒！'],
+      hurt: ['信仰……不会动摇……', '只是……皮肉之伤……'],
+      lowHp: ['圣光……赐予我……最后的力量……'],
+    },
+  },
+  // [CH5-EXPANSION 2026-05-09] 章5 每职业 +1 + warrior×2（原无 warrior）
+  {
+    id: 'eternal_champion', name: '永恒斗士', emoji: '', chapter: 5,
+    baseHp: 42, baseDmg: 12, category: 'normal', combatType: 'warrior', archetype: 'paladin',
+    drops: { gold: 28, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 12 },
+      { type: '攻击', baseValue: 15, description: '圣裁一击' },
+    ]}],
+    quotes: {
+      enter: ['斗技场永不熄灯。', '（金属轻响）'],
+      death: ['斗技……结束了……', '归于荣耀……', '下一名斗士……会为我报名……'],
+      attack: ['圣裁！', '劈斩！', '来啊！'],
+      hurt: ['小伤不下场。', '还没尽兴。'],
+      lowHp: ['最后一击——为荣耀而挥！'],
+    },
+  },
+  {
+    id: 'eternal_paladin', name: '白金骑士', emoji: '', chapter: 5,
+    baseHp: 48, baseDmg: 10, category: 'normal', combatType: 'warrior', archetype: 'paladin',
+    drops: { gold: 28, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 10 },
+      { type: '防御', baseValue: 10 },
+      { type: '攻击', baseValue: 13, description: '圣光重击' },
+    ]}],
+    quotes: {
+      enter: ['圣光——与我同行。', '（甲胄铿锵）'],
+      death: ['圣光……稍稍收回了……', '铠甲……还在……灵魂已退……', '下一名骑士……会继续我的旅途……'],
+      attack: ['圣光！', '重击！', '审判！'],
+      hurt: ['小刀痕——祷告已愈。', '圣光仍伴我。'],
+      lowHp: ['以我骑士誓约——最后一刀！'],
+    },
+  },
+  {
+    id: 'eternal_skyknight', name: '穹苍骑兵', emoji: '', chapter: 5,
+    baseHp: 26, baseDmg: 9, category: 'normal', combatType: 'ranger', archetype: 'marksman',
+    drops: { gold: 28, relic: false },
+    phases: [{ actions: [
+      { type: '攻击', baseValue: 9 },
+      { type: '攻击', baseValue: 12, description: '俯冲射' },
+      { type: '技能', baseValue: 1, description: '虚弱', scalable: false },
+    ]}],
+    quotes: {
+      enter: ['（风从头顶掠过）', '上空——是我的领地。'],
+      death: ['羽翼……折了……', '风……不再载我……', '下一次俯冲，我会更快。'],
+      attack: ['俯冲射！', '穿羽！', '咻——'],
+      hurt: ['气流吹偏了。', '擦伤。'],
+      lowHp: ['最后一支箭——带着风意而至！'],
+    },
+  },
+  {
+    id: 'eternal_bulwark', name: '永光壁垒', emoji: '', chapter: 5,
+    baseHp: 56, baseDmg: 7, category: 'normal', combatType: 'guardian', archetype: 'bulwark',
+    drops: { gold: 28, relic: false },
+    phases: [{ actions: [
+      { type: '防御', baseValue: 14 },
+      { type: '攻击', baseValue: 7 },
+      { type: '防御', baseValue: 12 },
+      { type: '攻击', baseValue: 10, description: '永光撞击' },
+    ]}],
+    quotes: {
+      enter: ['光壁——合上。', '（塔盾落地声）'],
+      death: ['壁……崩了……', '圣光遮不住一切……', '归于永光……'],
+      attack: ['壁撞！', '圣光冲！'],
+      hurt: ['盾面裂痕，可修。', '圣光尚在。'],
+      lowHp: ['最后一面壁——砸碎他与我！'],
+    },
+  },
+  {
+    id: 'eternal_chronomancer', name: '时砂法师', emoji: '', chapter: 5,
+    baseHp: 24, baseDmg: 9, category: 'normal', combatType: 'caster', archetype: 'cursemaster',
+    drops: { gold: 28, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 2, description: '易伤', scalable: false },
+      { type: '攻击', baseValue: 9 },
+      { type: '技能', baseValue: 1, description: '虚弱', scalable: false },
+    ]}],
+    quotes: {
+      enter: ['时砂——倒流片刻。', '（沙漏悬空）'],
+      death: ['时砂……走空了……', '回到过去……也没用了……', '下一次循环……我会更快。'],
+      attack: ['时砂刺！', '时之裂！', '砂流！'],
+      hurt: ['啊！', '沙漏晃了一下。'],
+      lowHp: ['把所有剩余时砂——全倒给你！'],
+    },
+  },
+  {
+    id: 'eternal_lightcantor', name: '永光吟唱者', emoji: '', chapter: 5,
+    baseHp: 30, baseDmg: 6, category: 'normal', combatType: 'priest', archetype: 'inquisitor',
+    drops: { gold: 28, relic: false },
+    phases: [{ actions: [
+      { type: '技能', baseValue: 2, description: '易伤', scalable: false },
+      { type: '防御', baseValue: 8 },
+      { type: '技能', baseValue: 1, description: '虚弱', scalable: false },
+      { type: '攻击', baseValue: 6 },
+    ]}],
+    quotes: {
+      enter: ['以永光之名——我为你唱挽歌。', '（唱经班低吟）'],
+      death: ['挽歌……断句了……', '永光…微弱……', '下次祷告会——我还会站上圣坛……'],
+      attack: ['圣咏！', '永光之音！'],
+      hurt: ['啊！', '经书烫手——但合上很难。'],
+      lowHp: ['以我嗓音——为你奏响最终章！'],
+    },
+  },
+];
