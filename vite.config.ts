@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         input: path.resolve(__dirname, 'index.html'),
-        external: ['react', 'react/jsx-runtime'],
+        external: ['react', 'react/jsx-runtime', 'react-dom'],
         ...(isSingleFile
           ? {
               output: { inlineDynamicImports: true },
