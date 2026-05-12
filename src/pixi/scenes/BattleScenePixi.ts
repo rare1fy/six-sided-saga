@@ -1,32 +1,49 @@
 /**
- * BattleScene (PixiJS) — 战斗界面
- * 整合: 背景 + 敌人舞台 + 玩家HUD (骰子+按钮)
+ * BattleScenePixi — 战斗界面 (PixiJS)
+ *
+ * 使用 BattleController 复用原版 logic 层，
+ * 渲染层通过 onChange 回调重建 UI。
+ * 集成 GlobalTopBar + 弹窗层
  */
-import { Container, Graphics, Text, TextStyle, Sprite } from 'pixi.js';
+import { Container } from 'pixi.js';
 import type { GameScene } from '../SceneManager';
 import type { GameApp } from '../GameApp';
-import { createText, createButton, createPanel, createProgressBar, COLORS, FONT } from '../UIFactory';
-import { createPixelSprite } from '../PixelRenderer';
-import { ENEMY_SPRITES } from '../../data/enemySprites';
-import { playHandSimple, enemyTurnSimple, drawDiceSimple, checkBattleResult, createTestEnemies } from '../logic/SimpleBattleLogic';
 import type { GameState } from '../../types/game';
-
-const W = 720, H = 1280;
-const ENEMY_STAGE_H = H * 0.52; // 上半区
-const HUD_H = H - ENEMY_STAGE_H; // 下半区
-
-// 简单伪随机
-function seededRandom(seed: number) {
-  let s = seed;
-  return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
-}
+import { BattleController } from '../battle/BattleController';
+import { buildForestBg, type FireflyData } from '../battle/ForestBg';
+import { buildEnemyStage, type EnemySpriteEntry } from '../battle/EnemyStage';
+import { buildPlayerHud, createFloatingDamage } from '../battle/PlayerHud';
+import { buildToast } from '../battle/Tooltip';
+import { GlobalTopBar, type TopBarData } from '../ui/GlobalTopBar';
+import { BattleEffectsLayer } from '../battle/BattleEffects';
+import { SettingsPanel, type SettingsCallbacks } from '../ui/SettingsPanel';
+import { LevelUpModal, type LevelUpOption } from '../ui/LevelUpModal';
+import { BattleLogPanel, type LogEntry } from '../ui/BattleLogPanel';
+import type { BattleGameState } from '../battle/types';
+import { CHAPTER_CONFIG } from '../../config';
+import { showDeathScreen, showVictoryScreen } from '../animation/SceneTransition';
 
 export class BattleScene implements GameScene {
   container: Container;
-  private gameApp: GameApp;
+  private gameApp!: GameApp;
+  private ctrl!: BattleController;
   private time = 0;
-  private enemySprites: { sprite: Sprite; baseY: number }[] = [];
-  private starsContainer: Container | null = null;
+
+  private bgLayer: Container | null = null;
+  private enemyLayer: Container | null = null;
+  private hudLayer: Container | null = null;
+  private floatLayer: Container | null = null;
+  private popupLayer: Container | null = null;
+  private topBar: GlobalTopBar | null = null;
+  private effects: BattleEffectsLayer | null = null;
+  private settingsModal: SettingsPanel | null = null;
+  private battleLog: BattleLogPanel | null = null;
+  private logEntries: LogEntry[] = [];
+
+  private fireflies: FireflyData[] = [];
+  private enemyEntries: EnemySpriteEntry[] = [];
+  private floatingDamages: { container: Container; update: (dt: number) => boolean }[] = [];
+  private toasts: { container: Container; update: (dt: number) => boolean }[] = [];
 
   constructor(gameApp: GameApp) {
     this.gameApp = gameApp;
@@ -35,387 +52,246 @@ export class BattleScene implements GameScene {
 
   onEnter(gameApp: GameApp) {
     this.gameApp = gameApp;
-    // 如果没有敌人，生成测试敌人
-    if (!this.gameApp.game.enemies || this.gameApp.game.enemies.length === 0) {
-      let g = this.gameApp.game;
-      g = { ...g, enemies: createTestEnemies(g.chapter || 1) };
-      g = drawDiceSimple(g);
-      this.gameApp.setGame(g);
+
+    this.ctrl = new BattleController(gameApp.game);
+    this.ctrl.onChange = () => {
+      this.gameApp.game = this.ctrl.game as any;
+      this.rebuild();
+    };
+    this.ctrl.onSceneSwitch = (scene: string) => {
+      if (scene === 'map') {
+        this.gameApp.setGame((prev: any) => ({ ...prev, phase: 'map' }));
+        this.gameApp.sceneManager.switchTo('map');
+      } else if (scene === 'victory') {
+        this.handleVictory();
+      } else if (scene === 'gameover') {
+        this.handleDefeat();
+      } else {
+        this.gameApp.sceneManager.switchTo(scene);
+      }
+    };
+
+    if (this.ctrl.enemies.length === 0) {
+      const testNode = {
+        id: 'test', type: 'enemy' as const, depth: 0,
+        connectedTo: [], completed: false,
+      };
+      this.ctrl.startBattle(testNode);
     }
+
     this.build();
   }
 
   onExit() {
     this.container.removeChildren();
-    this.enemySprites = [];
+    this.bgLayer = null;
+    this.enemyLayer = null;
+    this.hudLayer = null;
+    this.floatLayer = null;
+    this.popupLayer = null;
+    this.topBar = null;
+    this.effects = null;
+    this.fireflies = [];
+    this.enemyEntries = [];
+    this.floatingDamages = [];
+    this.toasts = [];
   }
 
-  onGameStateChanged(game: GameState) {
-    // 后续可以局部刷新
-  }
+  onGameStateChanged(_game: GameState) {}
 
   onTick = (ticker: any) => {
-    const dt = ticker.deltaTime * 0.016;
+    const dt = typeof ticker === 'number' ? ticker * 0.016 : (ticker.deltaTime ?? ticker) * 0.016;
     this.time += dt;
 
-    // 敌人浮动
-    for (const e of this.enemySprites) {
-      e.sprite.y = e.baseY + Math.sin(this.time * 2 + e.baseY * 0.01) * 3;
+    for (const entry of this.enemyEntries) {
+      if (entry.sprite) {
+        entry.container.y = entry.baseY + Math.sin(this.time * 2 + entry.idx * 1.2) * 3;
+      }
+    }
+
+    for (const fly of this.fireflies) {
+      fly.g.x = fly.baseX + Math.sin(this.time * fly.speed + fly.phase) * 15;
+      fly.g.y = fly.baseY + Math.cos(this.time * fly.speed * 0.7 + fly.phase) * 10;
+      fly.g.alpha = 0.3 + Math.sin(this.time * 1.5 + fly.phase) * 0.4;
+    }
+
+    // 粒子/特效层更新
+    if (this.effects) this.effects.update(dt);
+
+    this.floatingDamages = this.floatingDamages.filter(fd => {
+      const done = fd.update(dt);
+      if (done && this.floatLayer) this.floatLayer.removeChild(fd.container);
+      return !done;
+    });
+
+    this.toasts = this.toasts.filter(t => {
+      const done = t.update(dt);
+      if (done && this.floatLayer) this.floatLayer.removeChild(t.container);
+      return !done;
+    });
+
+    // 消费战斗事件
+    const events = this.ctrl.drainEvents();
+    for (const evt of events) {
+      if (evt.type === 'floatingText') {
+        const { text, target } = evt.data;
+        const x = 360;
+        const y = target === 'player' ? 800 : 300;
+        const color = text.startsWith('-') ? 0xff4444 : 0x44ff44;
+        this.spawnDamageNumber(text, x, y, color);
+        // 写入日志
+        const logType = text.startsWith('-') ? 'damage' : 'heal';
+        this.logEntries.push({ text: `${target === 'player' ? '你' : '敌人'} ${text}`, type: logType as any });
+        if (this.battleLog) this.battleLog.addEntry({ text: `${target === 'player' ? '你' : '敌人'} ${text}`, type: logType as any });
+      } else if (evt.type === 'toast') {
+        this.spawnToast(evt.data.msg);
+        this.logEntries.push({ text: evt.data.msg, type: 'info' });
+        if (this.battleLog) this.battleLog.addEntry({ text: evt.data.msg, type: 'info' });
+      } else if (evt.type === 'screenShake') {
+        if (this.effects) this.effects.screenShake(this.container);
+      } else if (evt.type === 'log') {
+        const entry: LogEntry = { text: evt.data.msg || evt.data.text || '', type: evt.data.logType || 'info' };
+        this.logEntries.push(entry);
+        if (this.battleLog) this.battleLog.addEntry(entry);
+      } else if (evt.type === 'sound') {
+        // 音效（playSfx 暂跳过）
+      }
     }
   };
 
   private build() {
-    const game = this.gameApp.game;
+    this.container.removeChildren();
+    this.floatingDamages = [];
+    const game = this.makeBattleView();
 
-    // ====== 背景（森林） ======
-    this.buildForestBackground();
+    // 背景
+    const isBoss = this.ctrl.enemies.some(e => (e as any).type === 'boss');
+    const bgResult = buildForestBg(isBoss);
+    this.bgLayer = bgResult.container;
+    this.fireflies = bgResult.fireflies;
+    this.container.addChild(this.bgLayer);
 
-    // ====== 敌人舞台 ======
-    this.buildEnemyStage(game);
+    // 敌人舞台
+    const enemyResult = buildEnemyStage(this.gameApp, game);
+    this.enemyLayer = enemyResult.container;
+    this.enemyEntries = enemyResult.enemyEntries;
+    this.container.addChild(this.enemyLayer);
 
-    // ====== 玩家 HUD ======
-    this.buildPlayerHud(game);
+    // 玩家 HUD
+    const hudResult = buildPlayerHud(this.gameApp, game, () => this.rebuild(), this.ctrl);
+    this.hudLayer = hudResult.container;
+    this.container.addChild(this.hudLayer);
+
+    // 浮动层
+    this.floatLayer = new Container();
+    this.container.addChild(this.floatLayer);
+
+    // 特效层
+    this.effects = new BattleEffectsLayer();
+    this.container.addChild(this.effects.container);
+
+    // 弹窗层
+    this.popupLayer = new Container();
+    this.container.addChild(this.popupLayer);
+
+    // 顶部状态栏
+    const chapterNames = (CHAPTER_CONFIG as any).chapterNames || ['幽暗森林'];
+    const chapterIdx = Math.min((game.chapter || 1) - 1, chapterNames.length - 1);
+    const topBarData: TopBarData = {
+      soulCrystals: (game as any).blackMarketQuota || 0,
+      soulMultiplier: (game as any).soulCrystalMultiplier || 1,
+      gold: game.souls ?? (game as any).gold ?? 0,
+      totalDamage: (game as any).stats?.totalDamageDealt || 0,
+      chapterName: chapterNames[chapterIdx],
+    };
+    this.topBar = new GlobalTopBar(topBarData, () => {
+      this.openSettings();
+    });
+    this.container.addChild(this.topBar.container);
   }
 
-  // =============== 森林背景 ===============
-  private buildForestBackground() {
-    const bg = new Graphics();
-    // 天空
-    bg.rect(0, 0, W, ENEMY_STAGE_H * 0.4);
-    bg.fill({ color: 0x0a1008 });
-    // 远山
-    bg.rect(0, ENEMY_STAGE_H * 0.3, W, ENEMY_STAGE_H * 0.15);
-    bg.fill({ color: 0x111a0e });
-    // 地面走廊
-    bg.rect(0, ENEMY_STAGE_H * 0.4, W, ENEMY_STAGE_H * 0.6);
-    bg.fill({ color: 0x12100e });
-    this.container.addChild(bg);
-
-    // 星星
-    this.starsContainer = new Container();
-    const rng = seededRandom(42);
-    for (let i = 0; i < 30; i++) {
-      const star = new Graphics();
-      const size = rng() > 0.85 ? 2 : 1;
-      star.rect(0, 0, size, size);
-      star.fill({ color: 0xc8cde6, alpha: 0.2 + rng() * 0.5 });
-      star.x = rng() * W;
-      star.y = rng() * ENEMY_STAGE_H * 0.35;
-      this.starsContainer.addChild(star);
-    }
-    this.container.addChild(this.starsContainer);
-
-    // 走廊透视线
-    const lines = new Graphics();
-    const cx = W / 2;
-    const horizon = ENEMY_STAGE_H * 0.35;
-    for (let i = 0; i < 12; i++) {
-      const y = horizon + i * (ENEMY_STAGE_H - horizon) / 12;
-      const spread = ((y - horizon) / (ENEMY_STAGE_H - horizon)) * W * 0.45;
-      lines.moveTo(cx - spread, y);
-      lines.lineTo(cx + spread, y);
-      lines.stroke({ color: 0x2a2418, width: 1, alpha: 0.5 });
-    }
-    // 纵线
-    for (let i = -2; i <= 2; i++) {
-      lines.moveTo(cx + i * 3, horizon);
-      lines.lineTo(cx + i * W * 0.12, ENEMY_STAGE_H);
-      lines.stroke({ color: 0x221a12, width: 1, alpha: 0.4 });
-    }
-    this.container.addChild(lines);
-
-    // 树影剪影
-    const trees = new Graphics();
-    const treePositions = [0.03, 0.1, 0.18, 0.82, 0.9, 0.97];
-    for (const tx of treePositions) {
-      const x = W * tx;
-      const h = 80 + Math.sin(tx * 20) * 30;
-      // 树干
-      trees.rect(x - 3, horizon - h * 0.3, 6, h * 0.35);
-      trees.fill({ color: 0x0a0806 });
-      // 树冠
-      for (let j = 0; j < 3; j++) {
-        const cy = horizon - h * 0.3 - j * 20;
-        const cw = 28 - j * 6;
-        trees.moveTo(x, cy - 24);
-        trees.lineTo(x - cw, cy);
-        trees.lineTo(x + cw, cy);
-        trees.closePath();
-        trees.fill({ color: 0x0a1208 });
-      }
-    }
-    this.container.addChild(trees);
-
-    // 火把光效（两侧）
-    for (const side of [-1, 1]) {
-      const torchX = cx + side * 260;
-      const torchY = horizon + 40;
-      const torch = new Graphics();
-      torch.circle(torchX, torchY, 4);
-      torch.fill({ color: 0xff6622 });
-      // 光晕
-      torch.circle(torchX, torchY, 30);
-      torch.fill({ color: 0xff6622, alpha: 0.05 });
-      this.container.addChild(torch);
-    }
-  }
-
-  // =============== 敌人舞台 ===============
-  private buildEnemyStage(game: GameState) {
-    const enemies = game.enemies || [];
-    if (enemies.length === 0) return;
-
-    const stageY = ENEMY_STAGE_H * 0.45;
-    const spacing = Math.min(180, W / (enemies.length + 1));
-
-    enemies.forEach((enemy, idx) => {
-      const x = (W / 2) + (idx - (enemies.length - 1) / 2) * spacing;
-      const y = stageY;
-
-      // 敌人像素精灵
-      const spriteData = ENEMY_SPRITES[enemy.name];
-      if (spriteData) {
-        const sprite = createPixelSprite(
-          this.gameApp.app, spriteData.pixels, 5, `enemy_${enemy.name}`,
-        );
-        sprite.x = x - (spriteData.width * 5) / 2;
-        sprite.y = y;
-        this.container.addChild(sprite);
-        this.enemySprites.push({ sprite, baseY: y });
-
-        // 选中光圈
-        const ring = new Graphics();
-        ring.ellipse(x, y + spriteData.height * 5 + 8, spriteData.width * 2.5, 8);
-        ring.stroke({ color: 0xff6600, width: 2, alpha: 0.5 });
-        this.container.addChild(ring);
-      }
-
-      // 敌人名字
-      const name = createText(enemy.name, { size: 12, color: 0x44ff44, bold: true });
-      name.anchor.set(0.5, 0);
-      name.x = x; name.y = y - 22;
-      this.container.addChild(name);
-
-      // 血条
-      const hpRatio = enemy.hp / enemy.maxHp;
-      const hpBar = createProgressBar(70, 6, hpRatio, { fill: 0xcc2200 });
-      hpBar.x = x - 35; hpBar.y = y - 8;
-      this.container.addChild(hpBar);
-
-      // HP 数字
-      const hpText = createText(`${enemy.hp}/${enemy.maxHp}`, { size: 9, color: 0xff8866 });
-      hpText.anchor.set(0.5, 0);
-      hpText.x = x; hpText.y = y - 7;
-      this.container.addChild(hpText);
-    });
-  }
-
-  // =============== 玩家 HUD ===============
-  private buildPlayerHud(game: GameState) {
-    const hudY = ENEMY_STAGE_H;
-
-    // HUD 背景面板
-    const hudBg = new Graphics();
-    hudBg.rect(0, hudY, W, HUD_H);
-    hudBg.fill({ color: 0x0c0a08 });
-    hudBg.moveTo(0, hudY);
-    hudBg.lineTo(W, hudY);
-    hudBg.stroke({ color: 0xc04040, width: 2 });
-    this.container.addChild(hudBg);
-
-    // === 技能栏 ===
-    const skillY = hudY + 10;
-    const skillBtn = createButton('普通攻击 ⚡7', 200, 36, {
-      bg: 0x3a1a0a, border: 0xe06633, textColor: 0xffcc66, fontSize: 13,
-    });
-    skillBtn.x = (W - 200) / 2;
-    skillBtn.y = skillY;
-    this.container.addChild(skillBtn);
-
-    // === 角色信息 ===
-    const infoY = skillY + 50;
-    const className = game.playerClass === 'warrior' ? '嗜血狂战'
-      : game.playerClass === 'mage' ? '星界魔导' : '影锋刺客';
-    const classColor = game.playerClass === 'warrior' ? 0xff6060
-      : game.playerClass === 'mage' ? 0xc0a0ff : 0x60ff90;
-
-    const classNameText = createText(`🩸 ${className}`, { size: 13, color: classColor, bold: true });
-    classNameText.x = 20; classNameText.y = infoY;
-    this.container.addChild(classNameText);
-
-    // HP 条
-    const hpBar = createProgressBar(300, 8, game.hp / game.maxHp, { fill: COLORS.hpGreen });
-    hpBar.x = 160; hpBar.y = infoY + 2;
-    this.container.addChild(hpBar);
-
-    const hpLabel = createText(`${game.hp}/${game.maxHp}`, { size: 10, color: 0x88cc88 });
-    hpLabel.x = 470; hpLabel.y = infoY;
-    this.container.addChild(hpLabel);
-
-    // 等级
-    const lvText = createText(`Lv ${game.level || 1}`, { size: 10, color: COLORS.textDim });
-    lvText.x = W - 60; lvText.y = infoY;
-    this.container.addChild(lvText);
-
-    // === 骰子手牌区域 ===
-    const diceY = infoY + 50;
-    const dice = game.dice || [];
-    const diceSize = 56;
-    const diceGap = 12;
-    const totalDiceW = dice.length * diceSize + (dice.length - 1) * diceGap;
-    const diceStartX = (W - totalDiceW) / 2;
-
-    // 波次信息
-    const waveText = createText(`第${game.currentWave || 1}波 · 回合${game.battleTurn || 1}`, { size: 11, color: COLORS.gold });
-    waveText.x = 20; waveText.y = hudY - 30;
-    this.container.addChild(waveText);
-
-    // 上次伤害显示
-    if ((game as any).lastDamage) {
-      const dmgText = createText(`-${(game as any).lastDamage}`, { size: 22, color: 0xff4444, bold: true });
-      dmgText.anchor.set(0.5);
-      dmgText.x = W / 2; dmgText.y = ENEMY_STAGE_H * 0.4;
-      dmgText.alpha = 0.8;
-      this.container.addChild(dmgText);
-    }
-
-    // 出牌次数提示
-    const playsText = createText(
-      `出牌: ${game.playsLeft ?? 0}/${game.maxPlays ?? 1}`,
-      { size: 10, color: (game.playsLeft ?? 0) > 0 ? COLORS.green : COLORS.red },
-    );
-    playsText.x = W - 120; playsText.y = hudY - 30;
-    this.container.addChild(playsText);
-
-    dice.forEach((die, idx) => {
-      const dx = diceStartX + idx * (diceSize + diceGap);
-      const dy = diceY;
-
-      // 骰子背景
-      const diceBg = new Graphics();
-      diceBg.roundRect(dx, dy, diceSize, diceSize, 6);
-      diceBg.fill({ color: die.selected ? 0x2a3a2a : 0x1a1a1a });
-      diceBg.roundRect(dx, dy, diceSize, diceSize, 6);
-      diceBg.stroke({
-        color: die.selected ? 0x40c060 : 0x555555,
-        width: die.selected ? 3 : 2,
-      });
-      this.container.addChild(diceBg);
-
-      // 骰子数字
-      if (die.value != null && !die.spent) {
-        const numText = new Text({
-          text: String(die.value),
-          style: new TextStyle({
-            fontFamily: FONT.ui, fontSize: 28, fontWeight: 'bold',
-            fill: die.selected ? 0xffffff : 0xcccccc,
-          }),
-        });
-        numText.anchor.set(0.5);
-        numText.x = dx + diceSize / 2;
-        numText.y = dy + diceSize / 2;
-        this.container.addChild(numText);
-      } else if (die.spent) {
-        // 已使用
-        const usedMark = new Graphics();
-        usedMark.moveTo(dx + 10, dy + 10);
-        usedMark.lineTo(dx + diceSize - 10, dy + diceSize - 10);
-        usedMark.moveTo(dx + diceSize - 10, dy + 10);
-        usedMark.lineTo(dx + 10, dy + diceSize - 10);
-        usedMark.stroke({ color: 0x555555, width: 2, alpha: 0.5 });
-        this.container.addChild(usedMark);
-      }
-
-      // 点击选择
-      diceBg.eventMode = 'static';
-      diceBg.cursor = 'pointer';
-      diceBg.on('pointertap', () => {
-        if (die.spent) return;
-        this.gameApp.setGame(prev => ({
-          ...prev,
-          dice: prev.dice.map((d, i) =>
-            i === idx ? { ...d, selected: !d.selected } : d
-          ),
-        }));
-        // 重建 HUD（简易实现）
-        this.container.removeChildren();
-        this.build();
-      });
-    });
-
-    // === 操作按钮 ===
-    const actionY = diceY + diceSize + 20;
-
-    // 重投按钮
-    const rerollBtn = createButton(`🔄 ${game.freeRerollsLeft || 0}次`, 100, 40, {
-      bg: 0x333333, border: 0x666666, textColor: 0xaaaaaa, fontSize: 12,
-    });
-    rerollBtn.x = 40;
-    rerollBtn.y = actionY;
-    this.container.addChild(rerollBtn);
-
-    // 出牌按钮
-    const hasSelected = dice.some(d => d.selected && !d.spent);
-    const playBtn = createButton(
-      hasSelected ? '▶ 出牌: 普通攻击' : '选择骰子...',
-      380, 44,
-      {
-        bg: hasSelected ? 0xc03000 : 0x333333,
-        border: hasSelected ? 0xff6633 : 0x555555,
-        textColor: hasSelected ? 0xffffff : 0x888888,
-        fontSize: 14,
+  private openSettings() {
+    if (this.settingsModal) return;
+    this.settingsModal = new SettingsPanel({
+      onOpenLog: () => {
+        // TODO: 打开战斗日志弹窗
       },
-    );
-    playBtn.x = 170;
-    playBtn.y = actionY;
-    if (hasSelected) {
-      playBtn.on('pointertap', () => {
-        // 调用简化战斗逻辑
-        let newGame = playHandSimple(this.gameApp.game);
-        const result = checkBattleResult(newGame);
-        
-        if (result === 'victory') {
-          // 胜利 → 回到地图
-          newGame = { ...newGame, phase: 'map', currentFloor: (newGame.currentFloor ?? 0) + 1 };
-          this.gameApp.setGame(newGame);
-          this.gameApp.sceneManager.switchTo('map');
-          return;
+      onClose: () => {
+        if (this.settingsModal) {
+          this.settingsModal.destroy();
+          this.settingsModal = null;
         }
-
-        // 检查是否还有出牌次数
-        if ((newGame.playsLeft ?? 0) <= 0) {
-          // 敌人回合
-          newGame = enemyTurnSimple(newGame);
-          const afterEnemy = checkBattleResult(newGame);
-          if (afterEnemy === 'defeat') {
-            newGame = { ...newGame, phase: 'gameover' };
-            this.gameApp.setGame(newGame);
-            this.gameApp.sceneManager.switchTo('start'); // 暂时回开始
-            return;
-          }
-          // 抽新骰子，下回合
-          newGame = drawDiceSimple(newGame);
-        }
-
-        this.gameApp.setGame(newGame);
-        this.container.removeChildren();
-        this.build();
-      });
-    }
-    this.container.addChild(playBtn);
-
-    // 锁定按钮
-    const lockBtn = createButton('🔒 0', 80, 40, {
-      bg: 0x333333, border: 0x666666, textColor: 0xaaaaaa, fontSize: 12,
+      },
     });
-    lockBtn.x = W - 120;
-    lockBtn.y = actionY;
-    this.container.addChild(lockBtn);
+    this.container.addChild(this.settingsModal.container);
+    this.settingsModal.open();
+  }
 
-    // === 底部遗物提示 ===
-    const relicText = createText('▲ 遗物库', { size: 10, color: COLORS.textDim });
-    relicText.anchor.set(0.5, 0);
-    relicText.x = W / 2; relicText.y = H - 30;
-    this.container.addChild(relicText);
+  private handleVictory() {
+    const game = this.gameApp.game as any;
+    const stats = {
+      totalDamage: game.stats?.totalDamageDealt || 0,
+      enemiesKilled: game.stats?.enemiesKilled || 0,
+    };
+    showVictoryScreen(this.container, stats, () => {
+      // 胜利后给升级选项
+      this.showLevelUp();
+    });
+  }
+
+  private handleDefeat() {
+    const game = this.gameApp.game as any;
+    const stats = {
+      totalDamage: game.stats?.totalDamageDealt || 0,
+      enemiesKilled: game.stats?.enemiesKilled || 0,
+      floor: game.currentFloor || 1,
+    };
+    showDeathScreen(this.container, stats, () => {
+      this.gameApp.switchPhase('start');
+    });
+  }
+
+  private showLevelUp() {
+    const options: LevelUpOption[] = [
+      { id: 'hp', icon: '\u2764', title: 'HP +20', description: '增加最大生命值', rarity: 'common' },
+      { id: 'reroll', icon: '\ud83d\udd04', title: '重投 +1', description: '每回合多一次免费重投', rarity: 'rare' },
+      { id: 'draw', icon: '\ud83c\udfb2', title: '抽骰 +1', description: '每回合多抽一颗骰子', rarity: 'epic' },
+    ];
+    const modal = new LevelUpModal(options, (id) => {
+      let g = { ...this.gameApp.game } as any;
+      if (id === 'hp') { g.maxHp += 20; g.hp = Math.min(g.hp + 20, g.maxHp); }
+      else if (id === 'reroll') { g.freeRerolls = (g.freeRerolls || 0) + 1; }
+      else if (id === 'draw') { g.drawCount = (g.drawCount || 3) + 1; }
+      g.phase = 'map';
+      this.gameApp.setGame(g);
+      modal.destroy();
+      this.gameApp.sceneManager.switchTo('map');
+    });
+    this.container.addChild(modal.container);
+    modal.open();
+  }
+
+  private rebuild() { this.build(); }
+
+  private makeBattleView(): BattleGameState {
+    return {
+      ...this.ctrl.game,
+      dice: this.ctrl.dice,
+      enemies: this.ctrl.enemies,
+    } as unknown as BattleGameState;
+  }
+
+  private spawnDamageNumber(text: string, x: number, y: number, color: number) {
+    if (!this.floatLayer) return;
+    const fd = createFloatingDamage(text, x, y, color);
+    this.floatLayer.addChild(fd.container);
+    this.floatingDamages.push(fd);
+  }
+
+  private spawnToast(msg: string) {
+    if (!this.floatLayer) return;
+    const t = buildToast(msg);
+    this.floatLayer.addChild(t.container);
+    this.toasts.push(t);
   }
 }

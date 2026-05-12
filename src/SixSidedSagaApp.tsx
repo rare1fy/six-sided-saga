@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SixSidedSagaApp — 主应用入口
  * 
  * 架构：
@@ -9,7 +9,7 @@
  * 两个层都从同一个 Context 读状态，实现联动。
  */
 import { useRef, useState, useEffect } from 'react';
-import { Application } from '@pixi/react';
+import { Stage } from '@pixi/react';
 // 注册 PixiJS 组件（必须在使用前调用）
 import './pixi/extend';
 import { BattleScene } from './pixi/scenes/BattleScene';
@@ -44,16 +44,18 @@ export function SixSidedSagaApp() {
       }}
     >
       {/* PixiJS Canvas 层 */}
-      <Application
+      <Stage
         width={size.width}
         height={size.height}
-        background={0x0a0a0a}
-        antialias
-        resolution={Math.min(window.devicePixelRatio, 2)}
-        autoDensity
+        options={{
+          backgroundColor: 0x0a0a0a,
+          antialias: true,
+          resolution: Math.min(window.devicePixelRatio, 2),
+          autoDensity: true,
+        }}
       >
         <BattleScene width={size.width} height={size.height} />
-      </Application>
+      </Stage>
 
       {/* DOM HUD 叠加层（覆盖在 Canvas 上方） */}
       <DemoHUD width={size.width} height={size.height} />

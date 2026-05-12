@@ -1,0 +1,387 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>3D Skeleton Battle Test - Six-Sided Saga</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+    #three-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+    #pixi-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
+    #pixi-canvas canvas { pointer-events: auto; }
+    #loading {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 100; background: #0a0a0a;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-family: monospace; color: #c8c0d0;
+    }
+    #loading .bar-bg { width: 240px; height: 8px; background: #1a1a2e; border: 1px solid #2a2535; margin-top: 16px; }
+    #loading .bar-fill { height: 100%; width: 0%; background: #e8d068; transition: width 0.3s; }
+    #loading .text { font-size: 14px; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="text">Loading 3D Assets...</div>
+    <div class="bar-bg"><div class="bar-fill" id="load-bar"></div></div>
+  </div>
+  <div id="three-canvas"></div>
+  <div id="pixi-canvas"></div>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.3.2/dist/pixi.min.js"></script>
+  <script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const W = window.innerWidth;
+const H = window.innerHeight;
+
+// === Three.js Renderer ===
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(W, H);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+document.getElementById('three-canvas').appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x0a0808, 0.08);
+
+const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 100);
+camera.position.set(0, 4.5, 4.0);
+camera.lookAt(0, 1.2, 0);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 1.2, 0);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.maxPolarAngle = Math.PI * 0.55;
+controls.minDistance = 3;
+controls.maxDistance = 12;
+
+// === Lights ===
+scene.add(new THREE.AmbientLight(0x1a1830, 0.6));
+
+const moonLight = new THREE.DirectionalLight(0x8090c0, 1.8);
+moonLight.position.set(-3, 8, 4);
+moonLight.castShadow = true;
+moonLight.shadow.mapSize.set(1024, 1024);
+moonLight.shadow.camera.near = 0.5;
+moonLight.shadow.camera.far = 20;
+moonLight.shadow.camera.left = -6;
+moonLight.shadow.camera.right = 6;
+moonLight.shadow.camera.top = 6;
+moonLight.shadow.camera.bottom = -6;
+scene.add(moonLight);
+
+const torch1 = new THREE.PointLight(0xff6030, 2.5, 8);
+torch1.position.set(-2.5, 1.5, 1);
+scene.add(torch1);
+
+const torch2 = new THREE.PointLight(0xff4020, 1.8, 6);
+torch2.position.set(2.5, 1.2, 0.5);
+scene.add(torch2);
+
+scene.add(new THREE.PointLight(0x4060c0, 1.2, 10).translateZ(-3).translateY(2));
+
+// === Ground ===
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(20, 20),
+  new THREE.MeshStandardMaterial({ color: 0x1a1510, roughness: 0.95 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+const grid = new THREE.GridHelper(10, 20, 0x1a1a1a, 0x111111);
+grid.position.y = 0.01;
+scene.add(grid);
+
+// === Trees ===
+function makeTree(x, z, h) {
+  const g = new THREE.Group();
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.12, h * 0.4, 6),
+    new THREE.MeshStandardMaterial({ color: 0x1a1008, roughness: 1 })
+  );
+  trunk.position.y = h * 0.2;
+  trunk.castShadow = true;
+  g.add(trunk);
+  const crown = new THREE.Mesh(
+    new THREE.ConeGeometry(0.5 + Math.random() * 0.3, h * 0.7, 5),
+    new THREE.MeshStandardMaterial({ color: 0x0a1a08, roughness: 0.9 })
+  );
+  crown.position.y = h * 0.6;
+  crown.castShadow = true;
+  g.add(crown);
+  g.position.set(x, 0, z);
+  return g;
+}
+
+const treePosArr = [
+  [-3,-2],[-4.5,-1.5],[-2,-3],[-5,-3],[3,-2],[4.5,-1.5],[2,-3],[5,-3],
+  [-1.5,-4],[1.5,-4],[0,-5],[-3.5,-4.5],[3.5,-4.5]
+];
+for (const [x, z] of treePosArr) scene.add(makeTree(x, z, 1.5 + Math.random() * 1.5));
+
+// === Fireflies ===
+const ffCount = 30;
+const ffGeo = new THREE.BufferGeometry();
+const ffPos = new Float32Array(ffCount * 3);
+const ffSpd = [];
+for (let i = 0; i < ffCount; i++) {
+  ffPos[i*3] = (Math.random()-0.5)*8;
+  ffPos[i*3+1] = 0.3+Math.random()*2.5;
+  ffPos[i*3+2] = (Math.random()-0.5)*6;
+  ffSpd.push({ x:(Math.random()-0.5)*0.3, y:(Math.random()-0.5)*0.2, z:(Math.random()-0.5)*0.3, p:Math.random()*6.28 });
+}
+ffGeo.setAttribute('position', new THREE.BufferAttribute(ffPos, 3));
+const ffMat = new THREE.PointsMaterial({ color:0xc8e060, size:0.08, transparent:true, opacity:0.8, blending:THREE.AdditiveBlending, depthWrite:false });
+const fireflies = new THREE.Points(ffGeo, ffMat);
+scene.add(fireflies);
+
+// === Load Models ===
+const loader = new GLTFLoader();
+const mixers = [];
+const models = [];
+let totalLoad = 5, loadCount = 0;
+
+function onLoad() {
+  loadCount++;
+  document.getElementById('load-bar').style.width = Math.round(loadCount/totalLoad*100)+'%';
+  if (loadCount >= totalLoad) setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 300);
+}
+
+let animClips = [];
+const animReady = new Promise(r => {
+  loader.load('./models/Rig_Medium_General.glb', gltf => { animClips = gltf.animations; onLoad(); r(); });
+});
+
+const chars = [
+  { file:'Skeleton_Warrior.glb', x:-1.5, z:0.5, rot:0.3, s:1.0 },
+  { file:'Skeleton_Mage.glb', x:1.5, z:0.5, rot:-0.3, s:1.0 },
+  { file:'Skeleton_Rogue.glb', x:-0.5, z:-0.8, rot:0.1, s:0.9 },
+  { file:'Skeleton_Minion.glb', x:0.5, z:-0.8, rot:-0.1, s:0.85 },
+];
+
+animReady.then(() => {
+  chars.forEach((cfg, idx) => {
+    loader.load('./models/'+cfg.file, gltf => {
+      const m = gltf.scene;
+      m.position.set(cfg.x, 0, cfg.z);
+      m.rotation.y = cfg.rot;
+      m.scale.setScalar(cfg.s);
+      m.traverse(c => {
+        if (c.isMesh) {
+          c.castShadow = true;
+          c.receiveShadow = true;
+          if (c.material && c.material.map) {
+            c.material.map.magFilter = THREE.NearestFilter;
+            c.material.map.minFilter = THREE.NearestFilter;
+          }
+        }
+      });
+      scene.add(m);
+      models.push({ m, cfg });
+      if (animClips.length > 0) {
+        const mx = new THREE.AnimationMixer(m);
+        const a = mx.clipAction(animClips[idx % animClips.length]);
+        a.play();
+        a.time = idx * 0.5;
+        mixers.push(mx);
+      }
+      onLoad();
+    });
+  });
+});
+
+// === PixiJS UI Overlay ===
+const PIXI = globalThis.PIXI;
+const pixiApp = new PIXI.Application({ width:W, height:H, backgroundAlpha:0, resolution:Math.min(window.devicePixelRatio,2), autoDensity:true, antialias:false });
+document.getElementById('pixi-canvas').appendChild(pixiApp.view);
+const designW = 720;
+const sc = W / designW;
+pixiApp.stage.scale.set(sc);
+const designH = H / sc;
+
+const C = { panelBg:0x12101a, panelBorder:0x2a2535, text:0xc8c0d0, gold:0xe8d068, green:0x3cc864, red:0xc8403c, hpGreen:0x2a8a2a, mpBlue:0x2a6ac8, purple:0x8b3cc8, textDim:0x6a6578 };
+const ts = (sz, fill, bold) => ({ fontFamily:'monospace', fontSize:sz, fill, fontWeight: bold?'bold':'normal' });
+
+// Top Bar
+const topBar = new PIXI.Container();
+const topBg = new PIXI.Graphics();
+topBg.beginFill(0x0a0a14, 0.85).drawRect(0,0,720,48).endFill();
+topBg.lineStyle(1, C.panelBorder, 0.6).moveTo(0,48).lineTo(720,48);
+topBar.addChild(topBg);
+topBar.addChild(Object.assign(new PIXI.Text('Gold 128', ts(16, C.gold)), {x:16,y:14}));
+topBar.addChild(Object.assign(new PIXI.Text('Ch.1 Dark Forest', ts(14, C.text)), {x:260,y:16}));
+topBar.addChild(Object.assign(new PIXI.Text('[Gear]', ts(16, C.textDim)), {x:660,y:14}));
+pixiApp.stage.addChild(topBar);
+
+// Wave Info
+const waveC = new PIXI.Container();
+const waveY = designH * 0.52 - 28;
+waveC.addChild(Object.assign(new PIXI.Text('Wave 1 / Turn 1', ts(16, C.gold)), {x:16,y:waveY}));
+waveC.addChild(Object.assign(new PIXI.Text('Plays: 2/2', ts(14, C.green)), {x:580,y:waveY}));
+pixiApp.stage.addChild(waveC);
+
+// Enemy HP Bars
+const hpC = new PIXI.Container();
+const enemies = [
+  {name:'Skeleton Warrior',hp:45,max:60,x:180,y:280},
+  {name:'Skeleton Mage',hp:30,max:40,x:540,y:280},
+  {name:'Skeleton Rogue',hp:25,max:35,x:300,y:360},
+  {name:'Skeleton Minion',hp:15,max:20,x:420,y:360},
+];
+for (const e of enemies) {
+  const g = new PIXI.Container();
+  const nm = new PIXI.Text(e.name, ts(11, C.text));
+  nm.anchor.set(0.5,0); nm.y = -20;
+  g.addChild(nm);
+  const bbg = new PIXI.Graphics();
+  bbg.beginFill(0x1a0808,0.8).drawRoundedRect(-40,0,80,8,2).endFill();
+  g.addChild(bbg);
+  const ratio = e.hp/e.max;
+  const fc = ratio>0.5?C.hpGreen:ratio>0.25?C.gold:C.red;
+  const bf = new PIXI.Graphics();
+  bf.beginFill(fc,0.9).drawRoundedRect(-40,0,80*ratio,8,2).endFill();
+  g.addChild(bf);
+  const ht = new PIXI.Text(e.hp+'/'+e.max, ts(10, 0xffffff));
+  ht.anchor.set(0.5,0); ht.y = 10;
+  g.addChild(ht);
+  const intent = new PIXI.Text('[ATK]', ts(12, C.red));
+  intent.anchor.set(0.5,0); intent.y = -38;
+  g.addChild(intent);
+  g.x = e.x; g.y = e.y;
+  hpC.addChild(g);
+}
+pixiApp.stage.addChild(hpC);
+
+// Player HUD
+const hud = new PIXI.Container();
+const hudY = designH * 0.54;
+hud.y = hudY;
+const hudBg = new PIXI.Graphics();
+hudBg.beginFill(C.panelBg, 0.92).drawRoundedRect(0,0,720,designH-hudY,8).endFill();
+hudBg.lineStyle(1, C.panelBorder, 0.6).drawRoundedRect(0,0,720,designH-hudY,8);
+hud.addChild(hudBg);
+hud.addChild(Object.assign(new PIXI.Text('Bloodrage Warrior', ts(18, 0xff6060, true)), {x:16,y:12}));
+
+const lvBg = new PIXI.Graphics();
+lvBg.beginFill(0x1a1a2a,0.9).drawRoundedRect(0,0,56,24,4).endFill();
+lvBg.lineStyle(1,C.gold,0.5).drawRoundedRect(0,0,56,24,4);
+lvBg.x=260; lvBg.y=12;
+hud.addChild(lvBg);
+hud.addChild(Object.assign(new PIXI.Text('Lv.3', ts(14, C.gold)), {x:272,y:16}));
+
+hud.addChild(Object.assign(new PIXI.Text('HP', ts(12, C.red)), {x:16,y:48}));
+const hpBg2 = new PIXI.Graphics();
+hpBg2.beginFill(0x1a0808,0.8).drawRoundedRect(0,0,400,16,3).endFill();
+hpBg2.x=50; hpBg2.y=46;
+hud.addChild(hpBg2);
+const hpFill2 = new PIXI.Graphics();
+hpFill2.beginFill(C.hpGreen,0.9).drawRoundedRect(0,0,320,16,3).endFill();
+hpFill2.x=50; hpFill2.y=46;
+hud.addChild(hpFill2);
+hud.addChild(Object.assign(new PIXI.Text('64/80', ts(12, 0xffffff)), {x:210,y:48}));
+hud.addChild(Object.assign(new PIXI.Text('Shield: 12', ts(14, 0x60a0ff)), {x:470,y:46}));
+
+// Dice
+const dY = 80;
+hud.addChild(Object.assign(new PIXI.Text('Hand', ts(14, C.gold)), {x:16,y:dY}));
+const dColors = [0xff6060,0xff6060,0x60a0ff,0xffd060,0xff6060];
+const dVals = ['ATK 3','ATK 5','DEF 2','MGC 4','ATK 1'];
+for (let i=0;i<5;i++){
+  const dx=40+i*130, dy=dY+30;
+  const db = new PIXI.Graphics();
+  db.beginFill(0x1a1a2e,0.9).drawRoundedRect(0,0,110,110,6).endFill();
+  db.lineStyle(2,dColors[i],0.7).drawRoundedRect(0,0,110,110,6);
+  db.x=dx; db.y=dy;
+  hud.addChild(db);
+  const dv = new PIXI.Text(dVals[i], ts(22, dColors[i]));
+  dv.anchor.set(0.5); dv.x=dx+55; dv.y=dy+55;
+  hud.addChild(dv);
+}
+
+// Buttons
+const bY = dY + 160;
+function makeBtn(x, w, bgC, borderC, label, textC) {
+  const b = new PIXI.Graphics();
+  b.beginFill(bgC,0.95).drawRoundedRect(0,0,w,48,6).endFill();
+  b.lineStyle(2,borderC,0.6).drawRoundedRect(0,0,w,48,6);
+  b.x=x; b.y=bY;
+  hud.addChild(b);
+  const t = new PIXI.Text(label, ts(18, textC));
+  t.x=x+w/2-t.width/2; t.y=bY+14;
+  hud.addChild(t);
+}
+makeBtn(40,200,0x18803a,0x3ccc60,'PLAY',0xc8ffd0);
+makeBtn(270,200,0x907020,0xc8a040,'REROLL (2)',0xfff0c0);
+makeBtn(500,160,0xa02820,0xd04838,'END',0xffc8c0);
+
+// Relics
+const rY = bY + 64;
+hud.addChild(Object.assign(new PIXI.Text('Relics', ts(12, C.textDim)), {x:16,y:rY}));
+const rIcons = ['[R1]','[R2]','[R3]','[R4]'];
+for (let i=0;i<4;i++){
+  const rx=70+i*50;
+  const rb = new PIXI.Graphics();
+  rb.beginFill(0x1a1a2e,0.8).drawRoundedRect(0,0,36,36,4).endFill();
+  rb.lineStyle(1,C.purple,0.5).drawRoundedRect(0,0,36,36,4);
+  rb.x=rx; rb.y=rY-4;
+  hud.addChild(rb);
+  hud.addChild(Object.assign(new PIXI.Text(rIcons[i], ts(12, C.purple)), {x:rx+4,y:rY}));
+}
+pixiApp.stage.addChild(hud);
+
+// === Animation Loop ===
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  const t = clock.getElapsedTime();
+  for (const mx of mixers) mx.update(dt);
+  const fp = fireflies.geometry.attributes.position.array;
+  for (let i=0;i<ffCount;i++){
+    const s=ffSpd[i];
+    fp[i*3]+=Math.sin(t*0.5+s.p)*s.x*dt;
+    fp[i*3+1]+=Math.cos(t*0.7+s.p)*s.y*dt;
+    fp[i*3+2]+=Math.sin(t*0.3+s.p*2)*s.z*dt;
+    if(Math.abs(fp[i*3])>5)fp[i*3]*=0.99;
+    if(fp[i*3+1]<0.2)fp[i*3+1]=0.2;
+    if(fp[i*3+1]>3)fp[i*3+1]=3;
+    if(Math.abs(fp[i*3+2])>4)fp[i*3+2]*=0.99;
+  }
+  fireflies.geometry.attributes.position.needsUpdate=true;
+  ffMat.opacity=0.5+0.3*Math.sin(t*2);
+  torch1.intensity=2.5+Math.sin(t*3)*0.5+Math.sin(t*7)*0.2;
+  torch2.intensity=1.8+Math.cos(t*4)*0.4+Math.cos(t*9)*0.15;
+  for(const{m}of models)m.position.y=Math.sin(t*1.5)*0.02;
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', () => {
+  const w=window.innerWidth, h=window.innerHeight;
+  camera.aspect=w/h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w,h);
+  pixiApp.renderer.resize(w,h);
+  pixiApp.stage.scale.set(w/720);
+});
+  </script>
+</body>
+</html>
+

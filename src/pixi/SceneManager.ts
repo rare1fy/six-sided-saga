@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SceneManager — 场景管理器
  * 替代 DiceHeroGame.tsx 的 React 路由逻辑
  */
@@ -63,6 +63,22 @@ export class SceneManager {
       const { EventScene } = await import('./scenes/EventScene');
       return new EventScene(app);
     });
+    this.register('gameOver', async (app) => {
+      const { GameOverScene } = await import('./scenes/GameOverScene');
+      return new GameOverScene(app);
+    });
+    this.register('loot', async (app) => {
+      const { LootScene } = await import('./scenes/LootScene');
+      return new LootScene(app);
+    });
+    this.register('skillSelect', async (app) => {
+      const { SkillSelectScene } = await import('./scenes/SkillSelectScene');
+      return new SkillSelectScene(app);
+    });
+    this.register('victory', async (app) => {
+      const { VictoryScene } = await import('./scenes/VictoryScene');
+      return new VictoryScene(app);
+    });
   }
 
   register(name: string, factory: (app: GameApp) => GameScene | Promise<GameScene>) {
@@ -104,3 +120,4 @@ export class SceneManager {
     this.currentScene?.onGameStateChanged?.(game);
   }
 }
+

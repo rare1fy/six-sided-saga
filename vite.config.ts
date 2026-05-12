@@ -1,6 +1,4 @@
-import tailwindcss from '@tailwindcss/vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
+﻿import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 
@@ -9,8 +7,6 @@ export default defineConfig(({ mode }) => {
   const isSingleFile = mode === 'singlefile';
   return {
     plugins: [
-      react(),
-      tailwindcss(),
       ...(isSingleFile ? [viteSingleFile({ removeViteModuleLoader: true })] : []),
     ],
     base: './',
@@ -23,14 +19,20 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
+      rollupOptions: {
+        input: path.resolve(__dirname, 'index.html'),
+        external: ['react', 'react/jsx-runtime'],
+        ...(isSingleFile
+          ? {
+              output: { inlineDynamicImports: true },
+              external: (id: string) => /\.(woff2|woff|ttf|otf|eot)$/i.test(id),
+            }
+          : {}),
+      },
       ...(isSingleFile
         ? {
             assetsInlineLimit: 409600,
             cssCodeSplit: false,
-            rollupOptions: {
-              output: { inlineDynamicImports: true },
-              external: (id) => /\.(woff2|woff|ttf|otf|eot)$/i.test(id),
-            },
           }
         : {}),
     },
@@ -39,3 +41,5 @@ export default defineConfig(({ mode }) => {
     },
   };
 });
+
+
