@@ -42,6 +42,16 @@ export interface Enemy {
   emoji: string;
   pattern?: (turn: number, self: Enemy, player: import('./game').GameState) => { type: '攻击' | '防御' | '技能'; value: number; description?: string };
   statuses: import('./dice').StatusEffect[];
+  // v0.5 控制系统
+  ccImmunity: number;          // 免控层数（0=无免控）
+  taunted?: number;            // 嘲讽剩余回合
+  stunned?: number;            // 眩晕（触发即消耗）
+  polymorphed?: number;        // 变羊剩余回合
+  blinded?: number;            // 致盲剩余回合
+  disarmed?: number;           // 缴械剩余回合
+  bloodChainUntilTurn?: number;  // 血锁链解除回合（v0.5 战士）
+  isSoloSealTarget?: boolean;    // 是否为单挑目标（v0.5 战士）
+  prePolymorphSnapshot?: { attack: number; hp: number; maxHp: number }; // 变羊前数据快照
   distance: number;  // distance to player: 0=melee, >0=approaching
   attackCount?: number; // 弓箭手攻击次数计数（伤害递增用）
   /** [2026-05-09 traits] 战士 BLOOD_FURY：受到伤害一次累积 +1（封顶 4） */

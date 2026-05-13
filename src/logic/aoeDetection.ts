@@ -25,7 +25,8 @@ export function detectAoeActive(
     const def = getDiceDef(d.diceDefId);
     return def.onPlay?.aoe;
   });
-  const hasThunderDice = selected.some(d => d.element === 'thunder');
+  // v0.5 fix: 战斗本能下雷电属性AOE失效（§1.4.4）
+  const hasThunderDice = !isNormalAttackMulti && selected.some(d => d.element === 'thunder');
   if (hasDiceAoe || hasThunderDice) return true;
 
   if (currentHands.activeHands.some(h => ['顺子', '4顺', '5顺', '6顺'].includes(h))) return true;

@@ -277,13 +277,8 @@ export async function executeEnemyTurn(
       continue;
     }
 
-    const isSlowed = e.statuses.some(s => s.type === 'slow' && s.duration > 0);
     const isMelee = e.combatType === 'warrior' || e.combatType === 'guardian';
 
-    if (isMelee && e.distance > 0 && isSlowed) {
-      cb.addLog(`${e.name} 被减速，无法移动！`);
-      continue;
-    }
     if (isMelee && e.distance > 0) {
       cb.setEnemies(prev => prev.map(en => en.uid === e.uid ? { ...en, distance: Math.max(0, en.distance - 1) } : en));
       cb.addLog(e.distance === 1 ? `${e.name} 逼近到近身位置！` : `${e.name} 正在逼近...(距离 ${e.distance - 1})`);
@@ -507,7 +502,6 @@ export async function executeEnemyTurn(
       const enemyForCalc = overrideAttackDmg !== undefined ? { ...e, attackDmg: overrideAttackDmg } : e;
       const damage = getEffectiveAttackDmg(enemyForCalc, prev.statuses, {
         attackCount: currentAttackCount,
-        isSlowed,
         arcaneBackfire: prev.arcaneBackfire,
       });
 

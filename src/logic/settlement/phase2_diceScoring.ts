@@ -40,7 +40,13 @@ export async function runPhase2DiceScoring(ctx: SettlementContext): Promise<{
   const settleDice = [...selected]; // 实际参与结算的骰子列表
   let splitOccurred = false;
   for (let i = 0; i < settleDice.length; i++) {
-    runningBase += settleDice[i].value;
+    // v0.5: selfMultBeforeSum - 仅放大自身点数（amplify新机制）
+    let diceValue = settleDice[i].value;
+    const diceDef = getDiceDef(settleDice[i].diceDefId);
+    if (diceDef.onPlay?.selfMultBeforeSum) {
+      diceValue = Math.ceil(diceValue * diceDef.onPlay.selfMultBeforeSum);
+    }
+    runningBase += diceValue;
     const currentRunning = runningBase;
     setSettlementData(prev => prev ? { ...prev, currentBase: currentRunning, currentEffectIdx: i, selectedDice: [...settleDice] } : prev);
     playSettlementTick(i);

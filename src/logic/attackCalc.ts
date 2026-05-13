@@ -24,8 +24,6 @@ function calcArcaneBackfireMult(stacks?: number): number {
 export interface AttackCalcExtras {
   /** 敌人攻击计数（ranger 用） */
   attackCount?: number;
-  /** 是否被减速 */
-  isSlowed?: boolean;
   /** 法师【法术反噬】层数（不可净化的独立 debuff） */
   arcaneBackfire?: number;
 }
@@ -58,9 +56,6 @@ export function getEffectiveAttackDmg(
     const baseHit = extras.attackCount ?? 0;
     const hitCount = enemy.archetype === 'marksman' ? baseHit * 2 : baseHit;
     val = Math.max(1, Math.floor(val * ENEMY_ATTACK_MULT.rangerHit) + hitCount);
-    if (extras.isSlowed) {
-      val = Math.floor(val * ENEMY_ATTACK_MULT.slow);
-    }
   }
 
   // 2. trait + archetype 综合乘数
@@ -76,8 +71,13 @@ export function getEffectiveAttackDmg(
   if (weak) val = Math.max(1, Math.floor(val * STATUS_EFFECT_MULT.weak));
 
   // 5. 玩家易伤
+  // v0.5: 易伤层数化 - 每层+0.5，封顶5层×3.5
   const playerVuln = playerStatuses.find(s => s.type === 'vulnerable');
-  if (playerVuln) val = Math.floor(val * STATUS_EFFECT_MULT.vulnerable);
+  if (playerVuln) {
+    const vulnLayers = Math.min(playerVuln.value || 1, 5);
+    const vulnMult = 1 + 0.5 * vulnLayers;
+    val = Math.floor(val * vulnMult);
+  }
 
   // 6. 法术反噬
   const backfireMult = calcArcaneBackfireMult(extras.arcaneBackfire);

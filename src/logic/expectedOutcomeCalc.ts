@@ -62,7 +62,14 @@ export function calculateExpectedOutcome(params: CalculateExpectedOutcomeParams)
 
   if (selected.length === 0) return null;
 
-  const X = selected.reduce((sum, d) => sum + d.value, 0);
+  // v0.5: selfMultBeforeSum - amplify仅放大自身点数
+  const X = selected.reduce((sum, d) => {
+    const def = getDiceDef(d.diceDefId);
+    const val = def.onPlay?.selfMultBeforeSum
+      ? Math.ceil(d.value * def.onPlay.selfMultBeforeSum)
+      : d.value;
+    return sum + val;
+  }, 0);
   let baseDamage = 0;
   let baseArmor = 0;
   let handMultiplier = 1;

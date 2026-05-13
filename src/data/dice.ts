@@ -72,7 +72,7 @@ const amplify: DiceDef = {
   faces: [1, 2, 3, 4, 5, 6],
   description: '出牌时最终伤害提升20%，随战斗阶段升级提升',
   rarity: 'rare',
-  onPlay: { bonusMult: 1.2 },
+  onPlay: { selfMultBeforeSum: 1.2 },
 };
 
 const split: DiceDef = {
@@ -150,15 +150,15 @@ const cracked: DiceDef = {
 
 // 通用骰子池（不含已移交给职业的骰子：elemental→法师, heavy→盗贼）
 const BASE_DICE: Record<string, DiceDef> = {
-  standard,
-  blade, amplify, split, magnet, joker,
+  standard, heavy,
+  amplify, split, joker,
   chaos,
   cursed, cracked,
   // heavy 和 elemental 保留定义但不放入通用池，仅用于旧存档兼容查询
 };
 
 // 保留旧ID定义供 getDiceDef 回退查找
-const LEGACY_DICE: Record<string, DiceDef> = { heavy, elemental };
+const LEGACY_DICE: Record<string, DiceDef> = { blade, magnet, elemental };
 
 // 盗贼临时骰子（连击/技能奖励，1回合后销毁）
 const temp_rogue: DiceDef = {
@@ -178,15 +178,16 @@ export function registerClassDice(diceList: DiceDef[]) {
 
 export const DICE_BY_RARITY: Record<DiceRarity, DiceDef[]> = {
   common: [standard],
-  uncommon: [],
-  rare: [blade, amplify, split, magnet, joker],
+  uncommon: [heavy],
+  rare: [amplify, split, joker],
   legendary: [chaos],
   curse: [cursed, cracked],
+  rune: [],
 };
 
 export const INITIAL_DICE_BAG: string[] = [
   'standard', 'standard', 'standard', 'standard',
-  'blade',
+  'heavy',
 ];
 
 export const ELEMENTAL_COLLAPSE_ELEMENTS = ['fire', 'ice', 'thunder', 'poison', 'holy'] as const;
@@ -222,9 +223,10 @@ export const getDiceRewardPool = (battleType: 'enemy' | 'elite' | 'boss', player
         for (let i = 0; i < count; i++) pool.push(d);
       });
       // 混入通用骰子（不含已有职业版本的：heavy→r_heavy, elemental→mage_elemental）
+      // v0.5: blade/magnet移至职业专属，heavy回归通用
       const universalDice = [
-        ALL_DICE['blade'], ALL_DICE['amplify'],
-        ALL_DICE['split'], ALL_DICE['magnet'],
+        ALL_DICE['heavy'], ALL_DICE['amplify'],
+        ALL_DICE['split'],
         ALL_DICE['joker'], ALL_DICE['chaos']
       ].filter(Boolean);
       universalDice.forEach(d => {
@@ -235,11 +237,11 @@ export const getDiceRewardPool = (battleType: 'enemy' | 'elite' | 'boss', player
   }
   
   // 后备：通用池（不含已移交职业的heavy/elemental）
+  // v0.5: blade/magnet移至职业专属，heavy回归通用
   const weights: Record<string, [number, number, number]> = {
-    blade:     [3, 3, 2],
+    heavy:     [3, 3, 2],
     amplify:   [3, 3, 2],
     split:     [1, 3, 3],
-    magnet:    [1, 3, 3],
     joker:     [1, 2, 3],
     chaos:     [0.3, 1, 3],
   };
@@ -275,3 +277,20 @@ export const ELEMENT_EFFECT_DESC: Record<string, string> = {
   poison: '叠层斩杀：施加毒层，跨回合持续掉血',
   holy: '经济续航：恢复等同点数的生命值',
 };
+
+
+// ============================================================
+// 状态骰子ID列表（v0.5 隔离，不进入奖励池）
+// ============================================================
+
+export const STATUS_DICE_IDS: string[] = ['cursed', 'cracked', 'temp_rogue'];
+
+// ============================================================
+// 符文骰子ID列表（v0.5 独立产出池，不混入普通奖励）
+// ============================================================
+
+export const RUNE_DICE_IDS: string[] = [
+  'rune_warrior_blood', 'rune_warrior_brawl', 'rune_warrior_iron',
+  'rune_mage_chant', 'rune_mage_element', 'rune_mage_seal',
+  'rune_rogue_combo', 'rune_rogue_venom', 'rune_rogue_shadow',
+];

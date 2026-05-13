@@ -8,7 +8,7 @@ import type { MapNode, BattleWave, ShopItem, MerchantItem, LootItem, InstakillCh
 import type { Relic } from './relics';
 
 // 重导出 — 统一入口
-export type { DiceElement, DiceRarity, DiceDef, OwnedDie, Die, HandType, StatusType, StatusEffect } from './dice';
+export type { DiceElement, DiceRarity, DiceDef, OwnedDie, Die, HandType, StatusType, StatusEffect, ControlType, HoldEffect, CastEffect, HoldEffectTrigger } from './dice';
 export type { ClassId } from '../data/classes';
 export type { NodeType, MapNode, EnemyCombatType, Enemy, LootItem, ChestTier, ChestReward, ShopItem, BattleWave, InstakillChallenge, MerchantItem } from './entities';
 export type { RelicTrigger, RelicRarity, RelicContext, RelicEffect, PassiveRelicKey, Relic } from './relics';
@@ -86,6 +86,17 @@ export interface GameState {
    *  - 独立于 statuses[]，因此不受净化类技能影响 */
   arcaneBackfire?: number;
   comboCount?: number;
+  // v0.5 新增字段
+  scarLayers?: number;           // 战士伤痕层数（主动自伤每损1HP+1层）
+  baseHandLimit?: number;        // 手牌上限基线（默认5，终极Boss后6）
+  // v0.5 战士战斗状态
+  soloSealTarget?: number | null;  // 单挑目标 enemyIndex
+  soloSealTurnsLeft?: number;      // 单挑剩余回合
+  berserkTurnsLeft?: number;       // 狂暴剩余回合
+  lastTurnHitCount?: number;       // 上回合被敌人攻击次数（怒火/旋风斩用）
+  lastTurnWasHit?: boolean;        // 上回合是否被敌人打掉血（战吼/旋风斩用）
+  titanfistUseCount?: number;      // 泰坦之拳本场使用次数
+  lifeFurnaceNextPlayBonus?: number; // 生命熔炉满血增伤标记
   lockedElement?: string;  // 棱镜聚焦锁定的元素         // 盗贼本回合已出牌次数（连击计数）
   lastPlayHandType?: string;   // 盗贼上一次出牌的牌型（连击终结判定）
 

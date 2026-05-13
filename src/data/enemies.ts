@@ -72,6 +72,7 @@ export const buildEnemy = (config: EnemyConfig, hpScale: number, dmgScale: numbe
     dropRelic: config.drops.relic,
     rerollReward: config.drops.rerollReward,
     statuses: [],
+      ccImmunity: 0,
     distance: (config.combatType === 'warrior' || config.combatType === 'guardian') ? 2 : 3,
     pattern: buildPattern(config, dmgScale),
   };

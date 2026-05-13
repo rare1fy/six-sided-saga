@@ -2,8 +2,30 @@
 // 骰子元素与稀有度
 // ============================================================
 
-export type DiceElement = 'normal' | 'fire' | 'ice' | 'thunder' | 'poison' | 'holy' | 'shadow';
-export type DiceRarity = 'common' | 'uncommon' | 'rare' | 'legendary' | 'curse';
+export type DiceElement = 'normal' | 'fire' | 'ice' | 'thunder' | 'poison' | 'holy' | 'shadow' | 'wind';
+export type DiceRarity = 'common' | 'uncommon' | 'rare' | 'legendary' | 'curse' | 'rune';
+
+// ============================================================
+// 控制效果类型（v0.5 新增）
+// ============================================================
+
+export type ControlType = 'taunt' | 'stun' | 'knockback' | 'polymorph' | 'blind' | 'disarm';
+
+// ============================================================
+// 符文骰子效果类型（v0.5 新增）
+// ============================================================
+
+export type HoldEffectTrigger = 'onTurnStart' | 'onPlay' | 'onHit' | 'onCondition';
+
+export interface HoldEffect {
+  trigger: HoldEffectTrigger;
+  description: string;
+}
+
+export interface CastEffect {
+  description: string;
+}
+
 
 // ============================================================
 // 骰子定义 (模板)
@@ -16,12 +38,17 @@ export interface DiceDef {
   faces: number[];
   description: string;
   rarity: DiceRarity;
+  route?: string;          // v0.5: 构筑路线标记（A/B/C/AB/AC/BC等）
   isElemental?: boolean;   // 元素骰子：抽到时随机坍缩
   isCursed?: boolean;      // 诅咒骰子：重Roll代价翻倍
   isCracked?: boolean;     // 碎裂骰子：回合结束自毁
+  isRune?: boolean;        // 符文骰子：无面值，持有+打出双效果（v0.5）
+  holdEffect?: HoldEffect; // 符文骰子持有效果（v0.5）
+  castEffect?: CastEffect; // 符文骰子打出效果（v0.5）
   onPlay?: {
     bonusDamage?: number;
     bonusMult?: number;
+    selfMultBeforeSum?: number; // v0.5: 仅放大自身点数（amplify 新机制）
     heal?: number;
     pierce?: number;
     selfDamage?: number;     // 反噬伤害（固定值）
@@ -29,11 +56,79 @@ export interface DiceDef {
     statusToEnemy?: StatusEffect;
     statusToSelf?: StatusEffect;
     aoe?: boolean;
+    controlType?: ControlType; // v0.5: 施加控制效果
+    controlAoe?: boolean;      // v0.5: 控制是否AOE
     armor?: number;          // 获得固定护甲
     // 战士特殊
     armorFromTotalPoints?: boolean; // 护甲=选中骰子总点数
     armorMultFromTotalPoints?: number; // 护甲=选中骰子总点数×N（向上取整）
     armorBreak?: boolean;        // 摧毁敌人全部护甲
+    // v0.5 战士新增 onPlay 字段
+    bonusDamageOnNormalAttack?: number;
+    scarBonusDamagePerLayer?: number;
+    multPerHitTaken?: number;
+    vulnerableOnHits?: number;
+    multIfHitLastTurn?: number;
+    scaleWithLostHpCap?: number;
+    bloodChain?: boolean;
+    healMultFromValue?: number;
+    fullHpArmorMult?: number;
+    fullHpBonusMult?: number;
+    normalAttackOnly?: boolean;
+    bonusDamageFromTotalPoints?: boolean;
+    executeHealPercent?: number;
+    executeHealPercentBoosted?: number;
+    executeDrawBonus?: number;
+    consumeScarPercent?: number;
+    permanentFaceBonus?: number;
+    permanentFaceBonusCap?: number;
+    soloSeal?: boolean;
+    soloSealDamageMult?: number;
+    armorMultBoosted?: number;
+    scarThresholdForBoost?: number;
+    aoeDamageBoosted?: number;
+    selfPointBonus?: number;
+    vulnerableToRandom?: number;
+    scatterBonusMult?: number;
+    scatterBonusCap?: number;
+    berserkDuration?: number;
+    berserkDamageMult?: number;
+    berserkTakenMult?: number;
+    berserkBloodCostReduction?: number;
+    selfDamageMultPer1Pct?: number;
+    selfDamageMultCap?: number;
+    scarMultPerLayer?: number;
+    scarOrSoloBonus?: number;
+    totalMultCap?: number;
+    trueDamage?: number;
+    guaranteedHpPercent?: number;
+    repeatSelfDamagePercent?: number;
+    repeatTrueDamage?: number;
+    repeatGuaranteedHpPercent?: number;
+    damagePerCleanse?: number;
+    // v0.5 法师新增 onPlay 字段
+    elementPool?: string[];            // 元素池（替代固定 ice）
+    fateDie?: boolean;                 // 命运骰：不进弃骰库
+    fateDieHealRange?: number[];       // 命运骰回复区间 [min, max]
+    fateDieDamageRange?: number[];     // 命运骰伤害区间 [min, max]
+    fateDieDamageMult?: number;        // 命运骰伤害倍率
+    manaCounter?: boolean;             // 法力反制标记
+    burnEchoMultPerLayer?: number;     // 自燃共鸣：每层灼烧追伤
+    burnEchoClearAll?: boolean;        // 自燃共鸣：清空灼烧
+    // v0.5 盗贼新增 onPlay 字段
+    recoverFromDiscard?: number;       // 从弃骰库回收骰子数
+    fallbackShadowDie?: boolean;       // 弃骰库为空时改为补残骰
+    consumeShadowDie?: number;         // 消耗N颗暗影残骰
+    consumeShadowDieMult?: number;     // 消耗残骰后伤害倍率
+    consumeShadowDieDamageMult?: number; // 消耗残骰追加伤害倍率
+    consumeAllShadowDice?: boolean;    // 消耗所有暗影残骰
+    consumeThresholdForControl?: number; // 消耗N颗以上触发控制
+    comboControlType?: string;         // 连击时触发的控制类型
+    comboScaleMultPerCombo?: number;   // 每层连击伤害加成
+    firstPlayRecoverDiscard?: number;  // 第1次出牌回收弃骰库
+    comboGrantExtraPlay?: boolean;     // 连击时给额外出牌机会
+    comboGrantShadowDie?: boolean;     // 连击时补残骰
+    shadowCorrosion?: boolean;         // 暗影侵蚀（牌库全变残骰）
     scaleWithHits?: boolean;     // 每受伤一次伤害+2
     firstPlayOnly?: boolean;     // 仅首次出牌生效
     scaleWithLostHp?: number;    // 伤害加成=已损失HP×N
@@ -193,7 +288,7 @@ export type HandType = '普通攻击' | '对子' | '连对' | '三连对' | '三
 // 状态效果
 // ============================================================
 
-export type StatusType = 'poison' | 'burn' | 'dodge' | 'vulnerable' | 'strength' | 'weak' | 'armor' | 'slow' | 'freeze';
+export type StatusType = 'poison' | 'burn' | 'dodge' | 'vulnerable' | 'strength' | 'weak' | 'armor' | 'freeze';
 
 export interface StatusEffect {
   type: StatusType;

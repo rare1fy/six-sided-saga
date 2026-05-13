@@ -14,6 +14,11 @@ export type RelicTrigger =
   | 'on_fatal'        // 致命伤害时（急救沙漏免死）
   | 'on_floor_clear'   // 清层完成时
   | 'on_move'         // 地图移动时（导航罗盘/藏宝图）
+  | 'on_combo'        // 连击时（盗贼专属遗物）
+  | 'on_scar_gain'    // 获得伤痕时（战士专属遗物）
+  | 'on_chant_end'    // 吟唱回合结束时（法师专属遗物）
+  | 'on_control_success' // 控制成功时
+  | 'on_overcharge'   // 过充状态时出牌
   | 'passive';        // 被动持续生效
 
 export type RelicRarity = 'common' | 'uncommon' | 'rare' | 'legendary';
@@ -58,6 +63,16 @@ export interface RelicContext {
   targetPoisonStacks?: number;     // 目标毒层数（毒爆晶石用）
   playsThisTurn?: number;          // 本回合已出牌次数（连击本能用）
   isBloodReroll?: boolean;         // 本次重投是否为卖血重投（黑市合同/血铸铠甲用）
+  // v0.5 新增上下文
+  scarLayers?: number;             // 当前伤痕层数（战士）
+  comboCount?: number;             // 当前连击计数（盗贼）
+  chantTurns?: number;             // 当前吟唱回合数（法师）
+  shadowDiceInHand?: number;       // 手牌中暗影残骰数量（盗贼）
+  isOvercharged?: boolean;         // 是否处于过充状态
+  overchargeLayers?: number;       // 过充层数
+  controlType?: string;            // 本次施加的控制类型
+  bloodChainActive?: boolean;      // 是否有活跃血锁
+  soloSealActive?: boolean;        // 是否处于单挑状态
 }
 
 export interface RelicEffect {
@@ -92,6 +107,14 @@ export interface RelicEffect {
   freeRerollChance?: number;     // 重投时N%概率不消耗次数
   oncePerTurn?: boolean;         // 每回合只触发一次
   purifyDebuff?: number;         // 净化N个负面状态
+  // v0.5 新增效果字段
+  scarBonus?: number;              // 伤痕层数加成
+  comboBonus?: number;             // 连击伤害加成
+  chantBonus?: number;             // 吟唱倍率加成
+  overchargeBonus?: number;        // 过充加成
+  shadowDieOnTrigger?: boolean;    // 触发时补残骰
+  controlSuccessHeal?: number;     // 控制成功时回复HP
+  bloodChainDamageMult?: number;   // 血锁传递伤害倍率
 }
 
 // ============================================================
@@ -137,3 +160,27 @@ export interface Relic {
   maxCounter?: number;      // 最大计数（用于显示进度）
   counterLabel?: string;    // 计数标签（如"层"、"次"）
 }
+
+
+// ============================================================
+// 开局三选一机制（v0.5 新增）
+// ============================================================
+
+export interface StarterRelicChoice {
+  relicId: string;
+  hpCost: number;      // 选择代价（HP + maxHP）
+  maxHpCost: number;
+}
+
+export interface StarterRelicSelection {
+  choices: StarterRelicChoice[];  // 3个选项
+  selectedIndex: number | null;   // 玩家选择（null = 跳过）
+}
+
+/** 开局遗物代价表 */
+export const STARTER_RELIC_COST: Record<RelicRarity, { hp: number; maxHp: number }> = {
+  common: { hp: 5, maxHp: 5 },
+  uncommon: { hp: 10, maxHp: 10 },
+  rare: { hp: 15, maxHp: 15 },
+  legendary: { hp: 20, maxHp: 20 },
+};
