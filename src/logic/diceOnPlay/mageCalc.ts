@@ -89,4 +89,28 @@ export function applyMageCalc(
   if (op.multiElementBlast) {
     applyMultiElementBlast(selected, totalElementBonus, out);
   }
+
+  // === v0.5 新增 ===
+
+  // elementPool（mage_elemental 元素之力）— 随机元素在 drawPhase 坍缩时处理，
+  // onPlay 阶段不需要额外逻辑，元素效果由 elementCalc 统一处理
+
+  // fateDie（mage_mirror 命运骰）— 出牌后不进弃骰库，留在手牌重新roll
+  if (op.fateDie) {
+    // 1-3 回血，4-6 造成伤害
+    const healRange = op.fateDieHealRange || [1, 3];
+    const dmgRange = op.fateDieDamageRange || [4, 6];
+    const dmgMult = op.fateDieDamageMult || 3;
+    if (d.value >= healRange[0] && d.value <= healRange[1]) {
+      out.extraHeal += d.value;
+    } else if (d.value >= dmgRange[0] && d.value <= dmgRange[1]) {
+      out.extraDamage += d.value * dmgMult;
+    }
+  }
+
+  // controlType（mage_polymorph 变羊术）— 控制效果统一输出
+  if (op.controlType && !out.controlType) {
+    out.controlType = op.controlType as any;
+    out.controlAoe = !!op.controlAoe;
+  }
 }

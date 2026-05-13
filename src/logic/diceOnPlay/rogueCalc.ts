@@ -95,4 +95,14 @@ export function applyRogueCalc(
       out.extraDamage += totalDebuffs * 2;
     }
   }
+
+  // === v0.5 新增 ===
+
+  // doublePoisonOnKill（r_toxblade 剧毒匕首）— 击杀时毒层翻倍
+  // 实际在 postPlayEffects 击杀判定时处理，这里标记
+  // （onPlay 阶段无法确定是否击杀，需要在伤害结算后判断）
+
+  // comboPersistStacks（r_combomastery 连击心得）— 连击层数保留到下回合
+  // 实际在 turnEndProcessing 中处理，这里标记
+  // （onPlay 阶段只需要正常计算连击加成，层数保留是回合结束时的逻辑）
 }

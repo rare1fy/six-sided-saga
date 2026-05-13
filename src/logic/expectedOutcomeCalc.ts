@@ -202,6 +202,24 @@ export function calculateExpectedOutcome(params: CalculateExpectedOutcomeParams)
     });
   }
 
+  // v0.5 accumulators
+  let totalSelfDamage = 0;
+  let resultControlType: string | null = null;
+  let resultControlAoe = false;
+  let resultBloodChain = false;
+  let resultSoloSeal = false;
+  let resultSoloSealDamageMult = 1;
+  let resultBerserk: { duration: number; damageMult: number; takenMult: number; bloodCostReduction: number } | null = null;
+  let totalTrueDamage = 0;
+  let resultGuaranteedHpPercent = 0;
+  let totalSelfPointBonus = 0;
+  let totalVulnerableToRandom = 0;
+  let totalDrawBonus = 0;
+  let totalPermanentFaceBonus = 0;
+  let totalDamagePerCleanse = 0;
+  let resultScatterBonusMult = 0;
+  let resultScatterBonusCap = 0;
+
   const hasUnify = selected.some(d => getDiceDef(d.diceDefId).onPlay?.unifyElement);
   // 确定性选择：统一为第一个被选骰子的元素（预览需要确定性，避免 Math.random 导致 UI 闪烁）
   const unifiedElement = hasUnify && !skipOnPlay ? (selected.find(d => d.element && d.element !== 'normal')?.element || 'fire') : null;
@@ -233,6 +251,20 @@ export function calculateExpectedOutcome(params: CalculateExpectedOutcomeParams)
     multiplier *= diceResult.multiplier;
     holyPurify += diceResult.holyPurify;
     statusEffects.push(...diceResult.statusEffects);
+    // v0.5 归并
+    totalSelfDamage += diceResult.selfDamage;
+    if (diceResult.controlType) { resultControlType = diceResult.controlType; resultControlAoe = diceResult.controlAoe; }
+    if (diceResult.bloodChain) resultBloodChain = true;
+    if (diceResult.soloSeal) { resultSoloSeal = true; resultSoloSealDamageMult = diceResult.soloSealDamageMult; }
+    if (diceResult.berserk) resultBerserk = diceResult.berserk;
+    totalTrueDamage += diceResult.trueDamage;
+    if (diceResult.guaranteedHpPercent > resultGuaranteedHpPercent) resultGuaranteedHpPercent = diceResult.guaranteedHpPercent;
+    totalSelfPointBonus += diceResult.selfPointBonus;
+    totalVulnerableToRandom += diceResult.vulnerableToRandom;
+    totalDrawBonus += diceResult.drawBonus;
+    totalPermanentFaceBonus += diceResult.permanentFaceBonus;
+    totalDamagePerCleanse += diceResult.damagePerCleanse;
+    if (diceResult.scatterBonusMult > resultScatterBonusMult) { resultScatterBonusMult = diceResult.scatterBonusMult; resultScatterBonusCap = diceResult.scatterBonusCap; }
   });
 
   // ─── 法师过充倍率加成 ───
@@ -309,5 +341,22 @@ export function calculateExpectedOutcome(params: CalculateExpectedOutcomeParams)
     goldBonus,
     holyPurify,
     pendingSideEffects,
+      // v0.5
+      selfDamage: totalSelfDamage,
+      controlType: resultControlType,
+      controlAoe: resultControlAoe,
+      bloodChain: resultBloodChain,
+      soloSeal: resultSoloSeal,
+      soloSealDamageMult: resultSoloSealDamageMult,
+      berserk: resultBerserk,
+      trueDamage: totalTrueDamage,
+      guaranteedHpPercent: resultGuaranteedHpPercent,
+      selfPointBonus: totalSelfPointBonus,
+      vulnerableToRandom: totalVulnerableToRandom,
+      drawBonus: totalDrawBonus,
+      permanentFaceBonus: totalPermanentFaceBonus,
+      damagePerCleanse: totalDamagePerCleanse,
+      scatterBonusMult: resultScatterBonusMult,
+      scatterBonusCap: resultScatterBonusCap,
   };
 }

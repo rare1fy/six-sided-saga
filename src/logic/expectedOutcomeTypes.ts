@@ -36,6 +36,23 @@ export interface ExpectedOutcomeResult {
   holyPurify: number;
   /** 副作用指令列表 — 调用方需执行 */
   pendingSideEffects: PendingSideEffect[];
+  // === v0.5 新增 ===
+  selfDamage: number;
+  controlType: string | null;
+  controlAoe: boolean;
+  bloodChain: boolean;
+  soloSeal: boolean;
+  soloSealDamageMult: number;
+  berserk: { duration: number; damageMult: number; takenMult: number; bloodCostReduction: number } | null;
+  trueDamage: number;
+  guaranteedHpPercent: number;
+  selfPointBonus: number;
+  vulnerableToRandom: number;
+  drawBonus: number;
+  permanentFaceBonus: number;
+  damagePerCleanse: number;
+  scatterBonusMult: number;
+  scatterBonusCap: number;
 }
 
 /** 计算参数 */
