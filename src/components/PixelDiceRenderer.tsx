@@ -57,7 +57,7 @@ const DICE_COLORS: Record<string, DiceColorScheme> = {
 
   w_bloodthirst: { border: '#581010', outer: '#802020', inner: '#a83030', highlight: '#e05040', shadow: '#380808', digit: '#ffc0b0', digitShadow: '#501010' },
 
-  w_ironwall:      { border: '#584018', outer: '#806020', inner: '#a88030', highlight: '#d0a848', shadow: '#382808', digit: '#ffe8c0', digitShadow: '#504018' },
+  /* LEGACY v0.5 */ w_ironwall:      { border: '#584018', outer: '#806020', inner: '#a88030', highlight: '#d0a848', shadow: '#382808', digit: '#ffe8c0', digitShadow: '#504018' },
 
   w_warcry:      { border: '#584810', outer: '#806818', inner: '#b09028', highlight: '#e0c040', shadow: '#383008', digit: '#fff8a0', digitShadow: '#504010' },
 
@@ -95,11 +95,12 @@ const DICE_COLORS: Record<string, DiceColorScheme> = {
 
   w_bloodgod:    { border: '#400408', outer: '#600810', inner: '#801018', highlight: '#b02028', shadow: '#280204', digit: '#ff7868', digitShadow: '#380408' },
 
-  w_overlord:    { border: '#504010', outer: '#706018', inner: '#988028', highlight: '#c0a840', shadow: '#382810', digit: '#f0e0b0', digitShadow: '#483810' },
+  /* LEGACY v0.5 */ w_overlord:    { border: '#504010', outer: '#706018', inner: '#988028', highlight: '#c0a840', shadow: '#382810', digit: '#f0e0b0', digitShadow: '#483810' },
 
-  // === 新增战士骰子 ===
+  // === 新增战士骰子 (v0.5) ===
   w_whirlwind:   { border: '#582800', outer: '#804010', inner: '#b06818', highlight: '#e0a030', shadow: '#381800', digit: '#fff0a8', digitShadow: '#502000' },
-  w_cleave:    { border: '#5a1010', outer: '#882020', inner: '#b83030', highlight: '#e05050', shadow: '#380808', digit: '#ffe8e8', digitShadow: '#501818' },
+  w_cleave:      { border: '#5a1010', outer: '#882020', inner: '#b83030', highlight: '#e05050', shadow: '#380808', digit: '#ffe8e8', digitShadow: '#501818' },
+  w_bloodchain:  { border: '#480810', outer: '#681020', inner: '#901830', highlight: '#c03048', shadow: '#300408', digit: '#ffa0b0', digitShadow: '#400810' },
 
   // === 娉曞笀 (22) 鈥?钃?210)/绱?270)/闈?195)/闈?240) ===
 
@@ -125,11 +126,11 @@ const DICE_COLORS: Record<string, DiceColorScheme> = {
 
   mage_resonance:{ border: '#282850', outer: '#404070', inner: '#585898', highlight: '#8080d0', shadow: '#181838', digit: '#d0d0ff', digitShadow: '#202040' },
 
-  mage_devour:   { border: '#180830', outer: '#281050', inner: '#381870', highlight: '#5030a8', shadow: '#100418', digit: '#a870f0', digitShadow: '#180828' },
+  /* LEGACY v0.5 */ mage_devour:   { border: '#180830', outer: '#281050', inner: '#381870', highlight: '#5030a8', shadow: '#100418', digit: '#a870f0', digitShadow: '#180828' },
 
   mage_purify:   { border: '#103848', outer: '#185870', inner: '#287898', highlight: '#40a8d0', shadow: '#082830', digit: '#90e8ff', digitShadow: '#103040' },
 
-  mage_surge:    { border: '#200848', outer: '#381070', inner: '#502098', highlight: '#7038d0', shadow: '#100428', digit: '#c0a0ff', digitShadow: '#180838' },
+  /* LEGACY v0.5 */ mage_surge:    { border: '#200848', outer: '#381070', inner: '#502098', highlight: '#7038d0', shadow: '#100428', digit: '#c0a0ff', digitShadow: '#180838' },
 
   mage_elemstorm:{ border: '#182048', outer: '#283870', inner: '#385098', highlight: '#5070c8', shadow: '#101030', digit: '#b0c8ff', digitShadow: '#182040' },
 
@@ -141,11 +142,16 @@ const DICE_COLORS: Record<string, DiceColorScheme> = {
 
   mage_star:     { border: '#181848', outer: '#283068', inner: '#384890', highlight: '#5868c8', shadow: '#101030', digit: '#c0d0ff', digitShadow: '#181840' },
 
-  mage_frostecho:   { border: '#103048', outer: '#184870', inner: '#286898', highlight: '#4098d0', shadow: '#082030', digit: '#a0d8ff', digitShadow: '#103040' },
+  /* LEGACY v0.5 */ mage_frostecho:   { border: '#103048', outer: '#184870', inner: '#286898', highlight: '#4098d0', shadow: '#082030', digit: '#a0d8ff', digitShadow: '#103040' },
 
   mage_meteor:   { border: '#281040', outer: '#402060', inner: '#603080', highlight: '#8848b8', shadow: '#180828', digit: '#d8a8f0', digitShadow: '#201030' },
 
   mage_elemheart:{ border: '#202850', outer: '#304870', inner: '#406890', highlight: '#6898d0', shadow: '#101838', digit: '#d0e8ff', digitShadow: '#182040' },
+
+  // === 新增法师骰子 (v0.5) ===
+  mage_counter:  { border: '#201850', outer: '#303078', inner: '#4048a0', highlight: '#6068d8', shadow: '#101038', digit: '#c0c8ff', digitShadow: '#201848' },
+  mage_gale:     { border: '#104838', outer: '#186858', inner: '#289878', highlight: '#48d0a8', shadow: '#083028', digit: '#90ffe0', digitShadow: '#104030' },
+  mage_polymorph:{ border: '#383050', outer: '#504870', inner: '#686090', highlight: '#9888c0', shadow: '#282038', digit: '#e0d8f8', digitShadow: '#302848' },
 
   // === 鐩楄醇 (24) 鈥?缁?120)/鑽у厜榛勭豢(90)/婀栬摑(170)/缈?150) ===
 
@@ -198,6 +204,18 @@ const DICE_COLORS: Record<string, DiceColorScheme> = {
   r_deathtouch:   { border: '#183818', outer: '#285838', inner: '#388850', highlight: '#58b868', shadow: '#102810', digit: '#a0f0b8', digitShadow: '#183018' },
 
   r_bladestorm:   { border: '#085018', outer: '#107028', inner: '#18a038', highlight: '#30e050', shadow: '#043808', digit: '#80ffa0', digitShadow: '#084818' },
+
+
+  // === 符文骰子 (v0.5) — 古铜金+职业色调 ===
+  rune_blood_pact:     { border: '#483018', outer: '#685028', inner: '#907038', highlight: '#c09848', shadow: '#302008', digit: '#ffe0a0', digitShadow: '#402810' },
+  rune_war_spirit:     { border: '#504018', outer: '#706028', inner: '#988038', highlight: '#c8a850', shadow: '#382810', digit: '#fff0b0', digitShadow: '#483810' },
+  rune_iron_bastion:   { border: '#484028', outer: '#686038', inner: '#888048', highlight: '#b0a860', shadow: '#302818', digit: '#f0e8c0', digitShadow: '#403818' },
+  rune_astral_echo:    { border: '#303058', outer: '#484878', inner: '#606098', highlight: '#8888d0', shadow: '#202040', digit: '#d8d8ff', digitShadow: '#282850' },
+  rune_elem_prism:     { border: '#284048', outer: '#386068', inner: '#488088', highlight: '#68b0c8', shadow: '#183038', digit: '#b0e8ff', digitShadow: '#203840' },
+  rune_seal:           { border: '#382850', outer: '#504070', inner: '#685890', highlight: '#9080c0', shadow: '#281838', digit: '#d8c8f0', digitShadow: '#302048' },
+  rune_shadow_ritual:  { border: '#183820', outer: '#285830', inner: '#388840', highlight: '#58c060', shadow: '#102810', digit: '#a0f8b0', digitShadow: '#183018' },
+  rune_combo_mark:     { border: '#284018', outer: '#406028', inner: '#589038', highlight: '#80c858', shadow: '#183010', digit: '#c8ffa0', digitShadow: '#283818' },
+  rune_venom_heart:    { border: '#184818', outer: '#286828', inner: '#389838', highlight: '#58d058', shadow: '#103010', digit: '#a0ffb0', digitShadow: '#184018' },
 
   temp_rogue:     { border: '#103818', outer: '#185028', inner: '#287038', highlight: '#48a058', shadow: '#082810', digit: '#80d890', digitShadow: '#103018' },
 
@@ -335,6 +353,27 @@ const P: Record<string, React.ReactNode> = {
   r_purifyblade: (<><rect x="6" y="6" width="6" height="12" fill="#c0e0d0"/><rect x="12" y="6" width="6" height="12" fill="#283830"/><rect x="10" y="10" width="4" height="2" fill="#283830"/><rect x="12" y="14" width="4" height="2" fill="#c0e0d0"/></>),
   r_deathtouch: (<><rect x="12" y="6" width="2" height="12" fill="#504840"/><rect x="14" y="4" width="4" height="2" fill="#808888"/><rect x="18" y="6" width="2" height="2" fill="#a0a8a8"/><rect x="16" y="8" width="2" height="2" fill="#707878"/><rect x="8" y="16" width="4" height="2" fill="#603020"/></>),
   r_bladestorm: (<><rect x="12" y="4" width="2" height="6" fill="#40c060"/><rect x="16" y="12" width="6" height="2" fill="#38b058"/><rect x="12" y="16" width="2" height="6" fill="#309848"/><rect x="4" y="12" width="6" height="2" fill="#288838"/><rect x="12" y="12" width="2" height="2" fill="#80ffa0"/></>),
+  // --- 新增战士 (v0.5) ---
+  w_bloodchain: (<><rect x="6" y="6" width="2" height="12" fill="#c03048"/><rect x="18" y="6" width="2" height="12" fill="#c03048"/><rect x="8" y="10" width="10" height="2" fill="#ff5070"/><rect x="8" y="14" width="10" height="2" fill="#ff5070"/><rect x="12" y="8" width="2" height="8" fill="#ff8090"/></>),
+  w_quake: (<><rect x="4" y="14" width="18" height="2" fill="#b09038"/><rect x="6" y="12" width="14" height="2" fill="#d0b050"/><rect x="8" y="10" width="10" height="2" fill="#e8d070"/><rect x="12" y="6" width="2" height="4" fill="#f0e080"/><rect x="10" y="8" width="2" height="2" fill="#c0a040" opacity=".6"/><rect x="14" y="8" width="2" height="2" fill="#c0a040" opacity=".6"/></>),
+  w_whirlwind: (<><rect x="12" y="10" width="2" height="2" fill="#ffe080"/><rect x="8" y="8" width="4" height="2" fill="#e0a030" opacity=".8"/><rect x="14" y="12" width="4" height="2" fill="#e0a030" opacity=".8"/><rect x="6" y="12" width="4" height="2" fill="#c08020" opacity=".6"/><rect x="14" y="8" width="4" height="2" fill="#c08020" opacity=".6"/><rect x="4" y="10" width="4" height="2" fill="#a06010" opacity=".4"/><rect x="18" y="10" width="4" height="2" fill="#a06010" opacity=".4"/></>),
+  w_cleave: (<><rect x="6" y="6" width="2" height="12" fill="#e05050"/><rect x="8" y="8" width="10" height="2" fill="#ff7070"/><rect x="8" y="12" width="10" height="2" fill="#ff7070"/><rect x="18" y="6" width="2" height="4" fill="#c03030"/><rect x="18" y="12" width="2" height="4" fill="#c03030"/></>),
+  // --- 新增法师 (v0.5) ---
+  mage_counter: (<><rect x="8" y="6" width="8" height="2" fill="#6068d8"/><rect x="6" y="8" width="2" height="6" fill="#5058c0"/><rect x="18" y="8" width="2" height="6" fill="#5058c0"/><rect x="8" y="14" width="8" height="2" fill="#6068d8"/><rect x="12" y="10" width="2" height="2" fill="#c0c8ff"/><rect x="10" y="10" width="2" height="2" fill="#8088e0" opacity=".6"/><rect x="14" y="10" width="2" height="2" fill="#8088e0" opacity=".6"/></>),
+  mage_gale: (<><rect x="4" y="8" width="4" height="2" fill="#48d0a8"/><rect x="8" y="10" width="6" height="2" fill="#38b890"/><rect x="14" y="12" width="6" height="2" fill="#48d0a8"/><rect x="18" y="8" width="4" height="2" fill="#38b890" opacity=".6"/><rect x="6" y="14" width="4" height="2" fill="#28a078" opacity=".5"/><rect x="12" y="6" width="2" height="2" fill="#90ffe0"/></>),
+  mage_polymorph: (<><rect x="10" y="6" width="6" height="2" fill="#9888c0"/><rect x="8" y="8" width="10" height="6" fill="#e0d8f8"/><rect x="10" y="10" width="2" height="2" fill="#504070"/><rect x="14" y="10" width="2" height="2" fill="#504070"/><rect x="10" y="14" width="6" height="2" fill="#c8c0e0"/><rect x="8" y="14" width="2" height="2" fill="#9888c0"/><rect x="16" y="14" width="2" height="2" fill="#9888c0"/></>),
+  // --- 新增盗贼图案 (v0.5) ---
+  r_shadowstrike: (<><rect x="14" y="4" width="2" height="2" fill="#58a060"/><rect x="12" y="6" width="2" height="2" fill="#48904e"/><rect x="10" y="8" width="2" height="2" fill="#387040"/><rect x="8" y="10" width="2" height="2" fill="#285830"/><rect x="8" y="12" width="8" height="2" fill="#58a060"/><rect x="10" y="14" width="4" height="2" fill="#387040"/></>),
+  // --- 符文骰子 (v0.5) — 统一古铜金底+职业标志 ---
+  rune_blood_pact: (<><rect x="8" y="6" width="8" height="2" fill="#c09848"/><rect x="6" y="8" width="12" height="6" fill="#907038"/><rect x="12" y="10" width="2" height="2" fill="#ff5050"/><rect x="8" y="14" width="8" height="2" fill="#c09848"/><rect x="10" y="10" width="2" height="2" fill="#ff3030" opacity=".6"/><rect x="14" y="10" width="2" height="2" fill="#ff3030" opacity=".6"/></>),
+  rune_war_spirit: (<><rect x="10" y="6" width="6" height="2" fill="#c8a850"/><rect x="8" y="8" width="10" height="6" fill="#988038"/><rect x="12" y="8" width="2" height="6" fill="#ffe080"/><rect x="10" y="10" width="6" height="2" fill="#ffe080" opacity=".5"/><rect x="10" y="14" width="6" height="2" fill="#c8a850"/></>),
+  rune_iron_bastion: (<><rect x="8" y="4" width="8" height="2" fill="#b0a860"/><rect x="6" y="6" width="12" height="8" fill="#888048"/><rect x="8" y="8" width="8" height="4" fill="#a09850"/><rect x="12" y="8" width="2" height="4" fill="#f0e8c0"/><rect x="8" y="10" width="8" height="2" fill="#f0e8c0" opacity=".4"/><rect x="8" y="14" width="8" height="2" fill="#686038"/></>),
+  rune_astral_echo: (<><rect x="12" y="4" width="2" height="2" fill="#8888d0"/><rect x="10" y="6" width="2" height="2" fill="#7070b8"/><rect x="14" y="6" width="2" height="2" fill="#7070b8"/><rect x="8" y="8" width="8" height="6" fill="#606098"/><rect x="12" y="10" width="2" height="2" fill="#d8d8ff"/><rect x="10" y="14" width="6" height="2" fill="#8888d0"/></>),
+  rune_elem_prism: (<><rect x="8" y="6" width="4" height="4" fill="#ff8040"/><rect x="14" y="6" width="4" height="4" fill="#60d0ff"/><rect x="8" y="12" width="4" height="4" fill="#60ff80"/><rect x="14" y="12" width="4" height="4" fill="#c060ff"/><rect x="12" y="10" width="2" height="2" fill="#ffffff"/></>),
+  rune_seal: (<><rect x="8" y="6" width="8" height="2" fill="#9080c0"/><rect x="6" y="8" width="12" height="6" fill="#685890"/><rect x="12" y="10" width="2" height="2" fill="#d8c8f0"/><rect x="10" y="8" width="2" height="6" fill="#9080c0" opacity=".5"/><rect x="14" y="8" width="2" height="6" fill="#9080c0" opacity=".5"/><rect x="8" y="14" width="8" height="2" fill="#504070"/></>),
+  rune_shadow_ritual: (<><rect x="8" y="6" width="8" height="2" fill="#58c060"/><rect x="6" y="8" width="12" height="6" fill="#388840"/><rect x="12" y="10" width="2" height="2" fill="#a0f8b0"/><rect x="8" y="10" width="2" height="2" fill="#58c060" opacity=".6"/><rect x="16" y="10" width="2" height="2" fill="#58c060" opacity=".6"/><rect x="8" y="14" width="8" height="2" fill="#285830"/></>),
+  rune_combo_mark: (<><rect x="12" y="4" width="2" height="2" fill="#80c858"/><rect x="10" y="6" width="2" height="2" fill="#68b040"/><rect x="14" y="6" width="2" height="2" fill="#68b040"/><rect x="8" y="8" width="2" height="2" fill="#509830"/><rect x="16" y="8" width="2" height="2" fill="#509830"/><rect x="12" y="10" width="2" height="2" fill="#c8ffa0"/><rect x="10" y="12" width="6" height="2" fill="#80c858" opacity=".6"/></>),
+  rune_venom_heart: (<><rect x="10" y="6" width="6" height="2" fill="#58d058"/><rect x="8" y="8" width="4" height="4" fill="#389838"/><rect x="14" y="8" width="4" height="4" fill="#389838"/><rect x="10" y="12" width="6" height="4" fill="#286828"/><rect x="12" y="10" width="2" height="2" fill="#a0ffb0"/></>),
   temp_rogue: (<><rect x="8" y="8" width="10" height="8" fill="#308040" opacity=".4"/><rect x="10" y="10" width="6" height="4" fill="#50c060" opacity=".3"/><rect x="8" y="8" width="2" height="2" fill="#40a050"/><rect x="16" y="8" width="2" height="2" fill="#40a050"/><rect x="8" y="14" width="2" height="2" fill="#40a050"/><rect x="16" y="14" width="2" height="2" fill="#40a050"/></>),
 };
 
@@ -349,6 +388,7 @@ const ELEMENT_COLORS: Record<string, DiceColorScheme> = {
   poison:  { border: '#183818', outer: '#285828', inner: '#389838', highlight: '#60e060', shadow: '#102810', digit: '#c0ffc0', digitShadow: '#183018' },
   holy:    { border: '#484030', outer: '#686050', inner: '#989078', highlight: '#e0d8b8', shadow: '#303020', digit: '#fffff0', digitShadow: '#484030' },
   shadow:  { border: '#181020', outer: '#281838', inner: '#382848', highlight: '#604878', shadow: '#100818', digit: '#c0a0e0', digitShadow: '#181020' },
+  wind:    { border: '#104030', outer: '#186050', inner: '#289070', highlight: '#48d0a0', shadow: '#082818', digit: '#90ffd8', digitShadow: '#103828' },
 };
 // 元素坍缩图案
 const ELEMENT_PATTERNS: Record<string, React.ReactNode> = {
@@ -358,6 +398,7 @@ const ELEMENT_PATTERNS: Record<string, React.ReactNode> = {
   poison: (<><rect x="10" y="4" width="4" height="2" fill="#50d050"/><rect x="8" y="6" width="8" height="2" fill="#40c040"/><rect x="6" y="8" width="12" height="4" fill="#38a838"/><rect x="8" y="12" width="8" height="4" fill="#48c848"/><rect x="10" y="16" width="4" height="2" fill="#30a030"/><rect x="10" y="10" width="4" height="2" fill="#70ff70"/></>),
   holy: (<><rect x="11" y="4" width="2" height="14" fill="#e0d8a0"/><rect x="6" y="9" width="12" height="4" fill="#e0d8a0"/><rect x="9" y="7" width="6" height="2" fill="#d0c890" opacity=".5"/><rect x="9" y="14" width="6" height="2" fill="#d0c890" opacity=".5"/></>),
   shadow: (<><rect x="8" y="8" width="8" height="8" fill="#382848"/><rect x="6" y="6" width="6" height="6" fill="#281838" opacity=".6"/><rect x="12" y="12" width="6" height="6" fill="#201030" opacity=".4"/><rect x="10" y="10" width="4" height="4" fill="#604878"/></>),
+  wind: (<><rect x="4" y="8" width="4" height="2" fill="#48d0a0"/><rect x="8" y="10" width="6" height="2" fill="#38b888"/><rect x="14" y="12" width="6" height="2" fill="#48d0a0"/><rect x="6" y="14" width="4" height="2" fill="#28a070" opacity=".6"/><rect x="18" y="8" width="4" height="2" fill="#38b888" opacity=".5"/><rect x="12" y="6" width="2" height="2" fill="#90ffd8"/></>),
 };
 
 /** 渲染像素风骰子 */

@@ -60,6 +60,45 @@ export const PATTERN_MAP: Record<string, React.FC> = {
   r_plaguedet: R_plaguedet, r_phantom: R_phantom, r_purifyblade: R_purifyblade,
   r_deathtouch: R_deathtouch, r_bladestorm: R_bladestorm,
 
+
+  // === v0.5 新增骰子 (内联图案) ===
+  w_bloodchain: () => (
+    <svg width="100%" height="100%" viewBox="0 0 24 24" shapeRendering={S}>
+      <rect x="4" y="4" width="2" height="16" fill="#c03048"/><rect x="18" y="4" width="2" height="16" fill="#c03048"/>
+      <rect x="6" y="9" width="12" height="2" fill="#ff5070"/><rect x="6" y="13" width="12" height="2" fill="#ff5070"/>
+      <rect x="11" y="6" width="2" height="12" fill="#ff8090"/>
+    </svg>
+  ),
+  w_quake: () => (
+    <svg width="100%" height="100%" viewBox="0 0 24 24" shapeRendering={S}>
+      <rect x="2" y="16" width="20" height="2" fill="#b09038"/><rect x="4" y="14" width="16" height="2" fill="#d0b050"/>
+      <rect x="6" y="12" width="12" height="2" fill="#e8d070"/><rect x="11" y="6" width="2" height="6" fill="#f0e080"/>
+      <rect x="9" y="8" width="2" height="2" fill="#c0a040" opacity=".6"/><rect x="13" y="8" width="2" height="2" fill="#c0a040" opacity=".6"/>
+    </svg>
+  ),
+  mage_counter: () => (
+    <svg width="100%" height="100%" viewBox="0 0 24 24" shapeRendering={S}>
+      <rect x="6" y="4" width="12" height="2" fill="#6068d8"/><rect x="4" y="6" width="2" height="12" fill="#5058c0"/>
+      <rect x="18" y="6" width="2" height="12" fill="#5058c0"/><rect x="6" y="18" width="12" height="2" fill="#6068d8"/>
+      <rect x="11" y="10" width="2" height="4" fill="#c0c8ff"/><rect x="9" y="11" width="6" height="2" fill="#8088e0" opacity=".6"/>
+    </svg>
+  ),
+  mage_gale: () => (
+    <svg width="100%" height="100%" viewBox="0 0 24 24" shapeRendering={S}>
+      <rect x="2" y="7" width="6" height="2" fill="#48d0a8"/><rect x="8" y="10" width="8" height="2" fill="#38b888"/>
+      <rect x="14" y="13" width="8" height="2" fill="#48d0a8"/><rect x="4" y="16" width="6" height="2" fill="#28a078" opacity=".6"/>
+      <rect x="11" y="4" width="2" height="4" fill="#90ffe0"/>
+    </svg>
+  ),
+  mage_polymorph: () => (
+    <svg width="100%" height="100%" viewBox="0 0 24 24" shapeRendering={S}>
+      <rect x="8" y="4" width="8" height="2" fill="#9888c0"/><rect x="6" y="6" width="12" height="10" fill="#e0d8f8"/>
+      <rect x="8" y="9" width="2" height="2" fill="#504070"/><rect x="14" y="9" width="2" height="2" fill="#504070"/>
+      <rect x="8" y="14" width="8" height="2" fill="#c8c0e0"/><rect x="6" y="16" width="2" height="2" fill="#9888c0"/>
+      <rect x="16" y="16" width="2" height="2" fill="#9888c0"/>
+    </svg>
+  ),
+
   // 临时骰子
   temp_rogue: () => (
     <svg width="100%" height="100%" viewBox="0 0 24 24" shapeRendering={S}>
