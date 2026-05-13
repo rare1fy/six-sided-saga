@@ -286,7 +286,7 @@ export function calculateExpectedOutcome(params: CalculateExpectedOutcomeParams)
   const lvlMultAdd   = (game.levelDamageMultBonus || 0) + (game.challengeDamageMultBonus || 0);
   const lvlPierceAdd = game.levelPierceBonus     || 0;
   const finalMultiplier = multiplier * (1 + lvlMultAdd);
-  const totalDamage = Math.ceil(baseDamage * finalMultiplier) + extraDamage + lvlDmgAdd + pierceDamage + lvlPierceAdd;
+  const totalDamage = Math.ceil(baseDamage * finalMultiplier) + extraDamage + lvlDmgAdd + pierceDamage + totalSelfPointBonus + lvlPierceAdd;
 
   // [DEBUG-DMG 2026-05-08] 伤害计算追踪日志（F12 控制台可查）
   if (typeof window !== 'undefined' && (window as any).__DMG_DEBUG__ !== false) {
