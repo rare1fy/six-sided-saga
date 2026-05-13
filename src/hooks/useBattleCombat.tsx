@@ -20,6 +20,8 @@ import { calculateExpectedOutcome, applyPendingSideEffects } from '../logic/expe
 import { runSettlementAnimation } from '../logic/settlement';
 import { applyDamageToEnemies } from '../logic/damageApplication';
 import { executePostPlayEffects, createCheckEnemyDeaths } from '../logic/postPlayEffects';
+import { processHoldEffects, processCastEffect } from '../logic/runeEffectEngine';
+import { isRuneDie } from '../logic/runeSystem';
 import { computePlayStatsUpdate, calcComboFinisherBonus } from '../logic/playHandStats';
 import { handleRogueComboPrep, handleRogueComboHit } from '../logic/rogueComboEffects';
 import { processTurnEnd } from '../logic/turnEndProcessing';
@@ -222,6 +224,60 @@ export function useBattleCombat(
     // 统计更新
     setGame(prev => ({ ...prev, stats: computePlayStatsUpdate({ prev, outcome, bestHand, selected }) }));
 
+    // v0.5: 符文骰子打出效果
+    const runeSelected = selected.filter(d => isRuneDie(d));
+    for (const runeDie of runeSelected) {
+      const runeResult = processCastEffect(runeDie, gameRef.current, enemiesRef.current, dice);
+      if (runeResult.playerDelta.armorChange) {
+        setGame(prev => ({ ...prev, armor: prev.armor + (runeResult.playerDelta.armorChange || 0) }));
+      }
+      if (runeResult.playerDelta.scarChange) {
+        setGame(prev => ({ ...prev, scarStacks: Math.max(0, (prev.scarStacks || 0) + (runeResult.playerDelta.scarChange || 0)) }));
+      }
+      if (runeResult.playerDelta.shieldChange) {
+        setGame(prev => ({ ...prev, chantShield: prev.chantShield + (runeResult.playerDelta.shieldChange || 0) }));
+      }
+      if (runeResult.flags.nextBasicAttackPointsDouble) {
+        setGame(prev => ({ ...prev, nextBasicAttackPointsDouble: true } as any));
+      }
+      if (runeResult.flags.elementDoubleThisTurn) {
+        setGame(prev => ({ ...prev, elementDouble: true } as any));
+      }
+      if (runeResult.flags.comboMultiplierDouble) {
+        setGame(prev => ({ ...prev, comboMultiplier: (prev.comboMultiplier || 1) * 2 } as any));
+      }
+      runeResult.messages.forEach(msg => {
+        addFloatingText(msg.text, msg.color, undefined, msg.targetUid || 'player');
+      });
+      runeResult.enemyEffects.forEach(eff => {
+        if (eff.damage && eff.targetUid) {
+          setEnemies(prev => prev.map(e =>
+            e.uid === eff.targetUid ? { ...e, hp: Math.max(0, e.hp - (eff.damage || 0)) } : e
+          ));
+        }
+        if (eff.trueDamage && eff.targetUid) {
+          setEnemies(prev => prev.map(e =>
+            e.uid === eff.targetUid ? { ...e, hp: Math.max(0, e.hp - (eff.trueDamage || 0)) } : e
+          ));
+        }
+        if (eff.poisonLayers && eff.targetUid) {
+          setEnemies(prev => prev.map(e => {
+            if (e.uid !== eff.targetUid) return e;
+            const existing = e.statuses.find(s => s.type === 'poison');
+            if (existing) {
+              return { ...e, statuses: e.statuses.map(s => s === existing ? { ...s, value: s.value + (eff.poisonLayers || 0) } : s) };
+            }
+            return { ...e, statuses: [...e.statuses, { type: 'poison' as const, value: eff.poisonLayers || 0, duration: 99 }] };
+          }));
+        }
+      });
+      runeResult.diceChanges.forEach(dc => {
+        if (dc.transformToShadow) {
+          setDice(prev => prev.map(d => d.id === dc.dieId ? { ...d, isShadowRemnant: true } as any : d));
+        }
+      });
+    }
+
     // 结算演出
     const { settleDice, splitOccurred } = await runSettlementAnimation({
       game, gameRef, enemies, dice, currentHands, selected,
@@ -359,6 +415,50 @@ export function useBattleCombat(
       setShuffleAnimating, setDiceDrawAnim,
       addFloatingText, addToast, playSound,
     });
+
+    // v0.5: 回合开始时触发符文骰子持有效果（延迟等待抽牌动画完成）
+    setTimeout(() => {
+      const currentDice = dice.filter(d => !d.spent);
+      const holdResult = processHoldEffects('onTurnStart', currentDice, gameRef.current, enemiesRef.current);
+      if (holdResult.messages.length > 0) {
+        holdResult.messages.forEach(msg => {
+          addFloatingText(msg.text, msg.color, undefined, msg.targetUid || 'player');
+        });
+      }
+      if (holdResult.playerDelta.armorChange) {
+        setGame(prev => ({ ...prev, armor: prev.armor + (holdResult.playerDelta.armorChange || 0) }));
+      }
+      if (holdResult.flags.nextScarMult) {
+        setGame(prev => ({ ...prev, nextScarMult: holdResult.flags.nextScarMult } as any));
+      }
+      // 符文持有效果的骰子变更
+      holdResult.diceChanges.forEach(dc => {
+        if (dc.baseDamageBonus) {
+          setDice(prev => prev.map(d => d.id === dc.dieId ? { ...d, baseDamageBonus: (d as any).baseDamageBonus || 0 + dc.baseDamageBonus } as any : d));
+        }
+        if (dc.transformToShadow) {
+          setDice(prev => prev.map(d => d.id === dc.dieId ? { ...d, isShadowRemnant: true } as any : d));
+        }
+      });
+      // 符文持有效果的敌人效果
+      holdResult.enemyEffects.forEach(eff => {
+        if (eff.damage && eff.targetUid) {
+          setEnemies(prev => prev.map(e =>
+            e.uid === eff.targetUid ? { ...e, hp: Math.max(0, e.hp - (eff.damage || 0)) } : e
+          ));
+        }
+        if (eff.poisonLayers && eff.targetUid) {
+          setEnemies(prev => prev.map(e => {
+            if (e.uid !== eff.targetUid) return e;
+            const existing = e.statuses.find(s => s.type === 'poison');
+            if (existing) {
+              return { ...e, statuses: e.statuses.map(s => s === existing ? { ...s, value: s.value + (eff.poisonLayers || 0) } : s) };
+            }
+            return { ...e, statuses: [...e.statuses, { type: 'poison' as const, value: eff.poisonLayers || 0, duration: 99 }] };
+          }));
+        }
+      });
+    }, 1200); // 等待抽牌动画完成
   };
 
   // ==================== useEffects ====================

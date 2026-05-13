@@ -63,6 +63,9 @@ import {
   bloodEyeRelic,
 } from './relicsSpecial';
 
+// v0.5 全新遗物
+import { getAllV05Relics, getV05RelicsForClass } from './relicEffectsV05';
+
 // 体系六：增幅转化遗物
 import {
   healingBreeze,
@@ -195,6 +198,8 @@ export const ALL_RELICS: Record<string, Relic> = {
   // 遗漏遗物（之前定义在ALL_RELICS之后）
   less_is_more_relic: lessIsMoreRelic,
   blood_eye: bloodEyeRelic,
+  // v0.5 全新遗物（80件）
+  ...Object.fromEntries(getAllV05Relics().map(r => [r.id, r])),
 };
 
 export const RELICS_BY_RARITY: Record<string, Relic[]> = {
@@ -216,7 +221,7 @@ export const filterRelicsByClass = (relics: Relic[], playerClass?: string): Reli
   });
 };
 
-/** 获取遗物奖励池 */
+/** 获取遗物奖励池（含 v0.5 新遗物） */
 export const getRelicRewardPool = (source: 'elite' | 'boss' | 'treasure' | 'merchant' | 'event', playerClass?: ClassId): Relic[] => {
   let pool: Relic[];
   switch (source) {
@@ -230,6 +235,9 @@ export const getRelicRewardPool = (source: 'elite' | 'boss' | 'treasure' | 'merc
       pool = [...RELICS_BY_RARITY.rare, ...RELICS_BY_RARITY.legendary];
       break;
   }
+  // 混入 v0.5 遗物（按职业过滤）
+  const v05Pool = playerClass ? getV05RelicsForClass(playerClass) : getAllV05Relics();
+  pool = [...pool, ...v05Pool];
   // merchant/event 来源不过滤职业（游荡商人可出售其他职业遗物）
   if (source === 'merchant' || source === 'event') return pool;
   return filterRelicsByClass(pool, playerClass);

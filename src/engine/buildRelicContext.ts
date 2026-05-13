@@ -27,6 +27,12 @@ export interface BuildRelicContextParams {
   overkillDamage?: number;
   /** 本次重投是否为卖血重投（on_reroll 触发时传入） */
   isBloodReroll?: boolean;
+  /** v0.5: 本次造成的伤害 */
+  damageDealt?: number;
+  /** v0.5: 被击破的屏障值 */
+  shieldBroken?: number;
+  /** v0.5: 本次消耗的暗影残骰点数总和 */
+  shadowDiceConsumedValue?: number;
 }
 
 /**
@@ -38,7 +44,7 @@ export const buildRelicContext = (params: BuildRelicContextParams): RelicContext
   const {
     game, dice, targetEnemy, rerollsThisTurn,
     handType, selectedDice, pointSum, hasPlayedThisTurn,
-    overkillDamage, isBloodReroll,
+    overkillDamage, isBloodReroll, damageDealt, shieldBroken, shadowDiceConsumedValue,
   } = params;
 
   const selected = selectedDice || dice.filter(d => !d.spent);
@@ -93,5 +99,28 @@ export const buildRelicContext = (params: BuildRelicContextParams): RelicContext
 
     // 重投类型标记
     isBloodReroll,
+
+    // v0.5 遗物效果需要的额外上下文
+    diceIds: selected.map(d => d.diceDefId),
+    uniqueDiceTypes: new Set(dice.map(d => d.diceDefId)).size,
+    hpPercent: game.maxHp > 0 ? game.hp / game.maxHp : 1,
+    targetHpPercent: targetEnemy ? (targetEnemy.maxHp > 0 ? targetEnemy.hp / targetEnemy.maxHp : 1) : 1,
+    consecutivePlayTurns: game.consecutivePlayTurns || 0,
+    damageDealt: damageDealt || 0,
+    currentArmor: game.armor || 0,
+    cursedDiceCount: dice.filter(d => getDiceDef(d.diceDefId).isCursed || getDiceDef(d.diceDefId).isCracked).length,
+    shieldBroken: shieldBroken || 0,
+    sameElementCount: (() => {
+      const elemCounts: Record<string, number> = {};
+      selected.forEach(d => {
+        const elem = getDiceDef(d.diceDefId).element;
+        if (elem) elemCounts[elem] = (elemCounts[elem] || 0) + 1;
+      });
+      return Math.max(0, ...Object.values(elemCounts));
+    })(),
+    targetPoisonLayers: targetEnemy?.statuses?.find(s => s.type === 'poison')?.value || 0,
+    hasShadowDie: selected.some(d => (d as any).isShadowRemnant),
+    consecutiveCombo: game.comboCount || 0,
+    shadowDiceConsumedValue: shadowDiceConsumedValue || 0,
   };
 };
