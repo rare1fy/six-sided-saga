@@ -278,6 +278,37 @@ export function useBattleCombat(
       });
     }
 
+    // v0.5: 出牌时触发符文骰子持有效果 (onPlay)
+    const holdOnPlayResult = processHoldEffects('onPlay', dice.filter(d => !d.spent), gameRef.current, enemiesRef.current);
+    holdOnPlayResult.messages.forEach(msg => {
+      addFloatingText(msg.text, msg.color, undefined, msg.targetUid || 'player');
+    });
+    if (holdOnPlayResult.playerDelta.armorChange) {
+      setGame(prev => ({ ...prev, armor: prev.armor + (holdOnPlayResult.playerDelta.armorChange || 0) }));
+    }
+    holdOnPlayResult.diceChanges.forEach(dc => {
+      if (dc.baseDamageBonus) {
+        setDice(prev => prev.map(d => d.id === dc.dieId ? { ...d, baseDamageBonus: ((d as any).baseDamageBonus || 0) + dc.baseDamageBonus } as any : d));
+      }
+    });
+    holdOnPlayResult.enemyEffects.forEach(eff => {
+      if (eff.damage && eff.targetUid) {
+        setEnemies(prev => prev.map(e =>
+          e.uid === eff.targetUid ? { ...e, hp: Math.max(0, e.hp - (eff.damage || 0)) } : e
+        ));
+      }
+      if (eff.poisonLayers && eff.targetUid) {
+        setEnemies(prev => prev.map(e => {
+          if (e.uid !== eff.targetUid) return e;
+          const existing = e.statuses.find(s => s.type === 'poison');
+          if (existing) {
+            return { ...e, statuses: e.statuses.map(s => s === existing ? { ...s, value: s.value + (eff.poisonLayers || 0) } : s) };
+          }
+          return { ...e, statuses: [...e.statuses, { type: 'poison' as const, value: eff.poisonLayers || 0, duration: 99 }] };
+        }));
+      }
+    });
+
     // 结算演出
     const { settleDice, splitOccurred } = await runSettlementAnimation({
       game, gameRef, enemies, dice, currentHands, selected,

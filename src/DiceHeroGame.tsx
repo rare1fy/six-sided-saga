@@ -32,6 +32,9 @@ import { GameOverScreen } from './components/GameOverScreen';
 import { VictoryScreen } from './components/VictoryScreen';
 import { ClassSelectScreen } from './components/ClassSelectScreen';
 import { SkillSelectScreen } from './components/SkillSelectScreen';
+import { StarterRelicModal } from './components/StarterRelicModal';
+import { generateStarterRelicChoices, applyStarterRelicCost } from './logic/starterRelicSelection';
+import { getV05RelicsForClass } from './data/relicEffectsV05';
 import { ChapterTransition } from './components/ChapterTransition';
 import { BossEntrance } from './components/BossEntrance';
 import { BossTauntEntrance, BossTauntHint } from './components/BossTauntEntrance';
@@ -126,7 +129,7 @@ export default function DiceHeroGame() {
             .filter(Boolean);
           setGame({
             ...newState,
-            phase: 'map',
+            phase: 'starterRelic',
             relics: startRelics,
           });
         }} />
@@ -148,6 +151,39 @@ export default function DiceHeroGame() {
         <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #080b0e 0%, #1a1520 50%, #0e1317 100%)' }}>
           <ChapterTransition />
         </div>
+      </GameContext.Provider>
+    );
+  }
+
+  // v0.5: 开局遗物三选一
+  if (game.phase === 'starterRelic') {
+    const classRelics = getV05RelicsForClass(game.playerClass || 'warrior')
+      .filter(r => (r as any).classRestriction === game.playerClass)
+      .map(r => ({ id: r.id, rarity: r.rarity as any }));
+    const selection = generateStarterRelicChoices(classRelics, game.relics.map(r => r.id));
+    return (
+      <GameContext.Provider value={contextValue}>
+        <StarterRelicModal
+          choices={selection.choices}
+          playerHp={game.hp}
+          playerMaxHp={game.maxHp}
+          onSelect={(idx) => {
+            const choice = selection.choices[idx];
+            if (!choice) return;
+            const [newHp, newMaxHp] = applyStarterRelicCost(game.hp, game.maxHp, choice);
+            const relic = { id: choice.relicId, name: choice.relicId, description: '' };
+            setGame(prev => ({
+              ...prev,
+              hp: newHp,
+              maxHp: newMaxHp,
+              relics: [...prev.relics, relic as any],
+              phase: 'map',
+            }));
+          }}
+          onSkip={() => {
+            setGame(prev => ({ ...prev, phase: 'map' }));
+          }}
+        />
       </GameContext.Provider>
     );
   }
