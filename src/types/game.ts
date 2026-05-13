@@ -95,6 +95,8 @@ export interface GameState {
   berserkTurnsLeft?: number;       // 狂暴剩余回合
   lastTurnHitCount?: number;       // 上回合被敌人攻击次数（怒火/旋风斩用）
   lastTurnWasHit?: boolean;        // 上回合是否被敌人打掉血（战吼/旋风斩用）
+  selfDamageThisTurn?: number;      // 本回合累计自伤量（血神之眼用）
+  hitsTakenLastTurn?: number;       // 上回合被敌人攻击次数（怒火用）
   titanfistUseCount?: number;      // 泰坦之拳本场使用次数
   lifeFurnaceNextPlayBonus?: number; // 生命熔炉满血增伤标记
   shadowCorruptUsed?: boolean;       // 暗影侵蚀已使用（每场限1次）

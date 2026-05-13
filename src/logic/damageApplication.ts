@@ -16,6 +16,9 @@ import { STATUS_INFO } from '../data/statusInfo';
 import { ANIMATION_TIMING } from '../config';
 import { PixelHeart, PixelShield, PixelZap } from '../components/PixelIcons';
 import { applyBloodFuryOnHurt, applyVengeanceToBerserkers } from './enemyTraits';
+import { applyControl } from './controlSystem';
+import { applyBloodChain } from './bloodChainSystem';
+import { activateSoloSeal } from './soloSealSystem';
 import { checkBossPhaseSwitch } from './bossPhaseSwitch';
 
 // ============================================================
@@ -491,16 +494,143 @@ export function applyDamageToEnemies(ctx: DamageAppContext): {
     }
   }
 
+  // === v0.5: 真实伤害（穿透护甲直接扣血） ===
+  if (outcome.trueDamage > 0 && targetEnemy.hp > 0) {
+    const trueDmg = outcome.trueDamage;
+    setEnemies(prev => prev.map(e =>
+      e.uid === targetUid ? { ...e, hp: Math.max(0, e.hp - trueDmg) } : e
+    ));
+    addFloatingText(`真伤 ${trueDmg}`, 'text-yellow-300', undefined, targetUid);
+  }
+
+  // === v0.5: 保底削血百分比 ===
+  if (outcome.guaranteedHpPercent > 0 && targetEnemy.hp > 0) {
+    const guaranteedDmg = Math.max(1, Math.ceil(targetEnemy.maxHp * outcome.guaranteedHpPercent));
+    setEnemies(prev => prev.map(e =>
+      e.uid === targetUid ? { ...e, hp: Math.max(0, e.hp - guaranteedDmg) } : e
+    ));
+    addFloatingText(`削血 ${guaranteedDmg}`, 'text-orange-400', undefined, targetUid);
+  }
+
+  // === v0.5: 控制效果施加 ===
+  if (outcome.controlType) {
+    const controlTargets = outcome.controlAoe
+      ? enemies.filter(e => e.hp > 0)
+      : targetEnemy.hp > 0 ? [targetEnemy] : [];
+    controlTargets.forEach(e => {
+      const isBossOrElite = typeof e.configId === 'string' && (e.configId.startsWith('boss_') || e.configId.startsWith('elite_'));
+      const result = applyControl(e, outcome.controlType as any, isBossOrElite);
+      if (result.success) {
+        addFloatingText(`${outcome.controlType}!`, 'text-cyan-300', undefined, e.uid);
+      } else if (result.fizzled) {
+        addFloatingText('抵抗!', 'text-gray-400', undefined, e.uid);
+      }
+    });
+    // applyControl 直接修改了 enemy 对象，需要触发 React 更新
+    setEnemies(prev => [...prev]);
+  }
+
+  // === v0.5: 对随机敌人施加易伤 ===
+  if (outcome.vulnerableToRandom > 0) {
+    const aliveOthers = enemies.filter(e => e.hp > 0 && e.uid !== targetUid);
+    if (aliveOthers.length > 0) {
+      const randomTarget = aliveOthers[Math.floor(Math.random() * aliveOthers.length)];
+      setEnemies(prev => prev.map(e => {
+        if (e.uid === randomTarget.uid) {
+          const existing = e.statuses.find(s => s.type === 'vulnerable');
+          if (existing) {
+            return { ...e, statuses: e.statuses.map(s => s === existing ? { ...s, value: s.value + outcome.vulnerableToRandom } : s) };
+          }
+          return { ...e, statuses: [...e.statuses, { type: 'vulnerable', value: outcome.vulnerableToRandom, duration: 99 }] };
+        }
+        return e;
+      }));
+      addFloatingText(`易伤 +${outcome.vulnerableToRandom}`, 'text-pink-400', undefined, randomTarget.uid);
+    }
+  }
+
+  // === v0.5: 每清除负面状态造成伤害 ===
+  if (outcome.damagePerCleanse > 0 && targetEnemy.hp > 0) {
+    setEnemies(prev => prev.map(e =>
+      e.uid === targetUid ? { ...e, hp: Math.max(0, e.hp - outcome.damagePerCleanse) } : e
+    ));
+    addFloatingText(`净化伤害 ${outcome.damagePerCleanse}`, 'text-green-300', undefined, targetUid);
+  }
+
+  // === v0.5: 散打乘区（已在 outcome.damage 中计算，这里只做飘字提示） ===
+  if (outcome.scatterBonusMult > 0) {
+    addFloatingText(`散打 x${(1 + outcome.scatterBonusMult).toFixed(1)}`, 'text-amber-300', undefined, 'player');
+  }
+
+  // === v0.5: 血锁链激活 ===
+  if (outcome.bloodChain && targetEnemy.hp > 0) {
+    const targetIdx = enemies.findIndex(e => e.uid === targetUid);
+    if (targetIdx >= 0) {
+      const chained = applyBloodChain(enemies, [targetIdx], game.battleTurn || 0);
+      setEnemies(chained);
+      addFloatingText('血锁链!', 'text-red-600', undefined, targetUid);
+      playSound('blood_chain');
+    }
+  }
+
+  // === v0.5: 单挑印记 ===
+  if (outcome.soloSeal && targetEnemy.hp > 0) {
+    const targetIdx = enemies.findIndex(e => e.uid === targetUid);
+    if (targetIdx >= 0) {
+      const [newState, newEnemies] = activateSoloSeal(game, enemies, targetIdx);
+      setGame(prev => ({ ...prev, ...newState }));
+      setEnemies(newEnemies);
+      addFloatingText('单挑!', 'text-orange-500', undefined, targetUid);
+      playSound('solo_seal');
+    }
+  }
+
+  // === v0.5: 狂暴状态 ===
+  if (outcome.berserk) {
+    setGame(prev => ({
+      ...prev,
+      berserkTurnsLeft: outcome.berserk!.duration,
+      berserkDamageMult: outcome.berserk!.damageMult,
+      berserkTakenMult: outcome.berserk!.takenMult,
+      berserkBloodCostReduction: outcome.berserk!.bloodCostReduction,
+    }));
+    addFloatingText(`狂暴! ${outcome.berserk.duration}回合`, 'text-red-500', undefined, 'player');
+    playSound('berserk');
+  }
+
+  // === v0.5: 自伤应用 ===
+  const totalSelfDmg = outcome.selfDamage;
+
   setPlayerEffect('attack');
   playSound(isAoeActive ? 'player_aoe' : 'player_attack');
   setTimeout(() => setPlayerEffect(null), 500);
-  setGame(prev => ({ 
-    ...prev, 
-    armor: prev.armor + outcome.armor,
-    hp: outcome.heal < 0
-      ? Math.max(1, prev.hp + outcome.heal) // 自伤不会杀死玩家
-      : Math.min(prev.maxHp, prev.hp + outcome.heal)
-  }));
+  setGame(prev => {
+    let newHp = prev.hp;
+    // 自伤
+    if (totalSelfDmg > 0) {
+      newHp = Math.max(1, newHp - totalSelfDmg); // 自伤不会杀死玩家
+    }
+    // 回血
+    if (outcome.heal > 0) {
+      newHp = Math.min(prev.maxHp, newHp + outcome.heal);
+    } else if (outcome.heal < 0) {
+      newHp = Math.max(1, newHp + outcome.heal);
+    }
+    return {
+      ...prev,
+      armor: prev.armor + outcome.armor,
+      hp: newHp,
+      // 记录本回合自伤量（供血神之眼计算）
+      selfDamageThisTurn: (prev.selfDamageThisTurn || 0) + totalSelfDmg,
+      // 记录被打次数（供下回合 multPerHitTaken 使用）
+      hitsTakenLastTurn: prev.hitsTakenLastTurn || 0,
+    };
+  });
+
+  // 自伤飘字
+  if (totalSelfDmg > 0) {
+    addFloatingText(`自伤 -${totalSelfDmg}`, 'text-red-300', undefined, 'player');
+  }
 
   return { hasAoe, isElementalAoe, finalEnemyHp };
 }

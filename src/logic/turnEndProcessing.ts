@@ -15,6 +15,9 @@ import { buildRelicContext } from '../engine/buildRelicContext';
 import { absorbPlayerDamage, calcMageChantHitPenalty } from './battleHelpers';
 import { PixelArcaneShield, PixelShield, PixelHeart, PixelArcaneSkull, PixelMagic } from '../components/PixelIcons';
 import { emitReward } from './rewardEvents';
+import { cleanupBloodChains } from './bloodChainSystem';
+import { decaySoloSeal } from './soloSealSystem';
+import { decayControlStatuses } from './controlSystem';
 
 /** 奖励类飘字统一金色 */
 const REWARD_COLOR = 'text-amber-200';

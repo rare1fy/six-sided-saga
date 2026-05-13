@@ -656,6 +656,28 @@ export function executePostPlayEffects(ctx: PostPlayContext): void {
       }
     }
   }
+  // === v0.5: 永久面值加成（w_bloodblade 血刃） ===
+  if (outcome.permanentFaceBonus > 0) {
+    // 随机选一颗已选骰子，永久+1面值
+    const eligibleDice = selected.filter(d => d.value < 6);
+    if (eligibleDice.length > 0) {
+      const target = eligibleDice[Math.floor(Math.random() * eligibleDice.length)];
+      setDice(prev => prev.map(d =>
+        d.id === target.id ? { ...d, value: Math.min(6, d.value + outcome.permanentFaceBonus) } : d
+      ));
+      addFloatingText(`面值+${outcome.permanentFaceBonus}!`, 'text-amber-400', undefined, 'player');
+    }
+  }
+
+  // === v0.5: 额外抽牌（w_execute 斩杀击杀时） ===
+  if (outcome.drawBonus > 0) {
+    setGame(prev => ({
+      ...prev,
+      tempDrawCountBonus: (prev.tempDrawCountBonus || 0) + outcome.drawBonus,
+    }));
+    addFloatingText(`下回合+${outcome.drawBonus}抽!`, 'text-blue-300', undefined, 'player');
+  }
+
   logMsg += `。`;
   addLog(logMsg);
 }
