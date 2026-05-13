@@ -5,6 +5,7 @@
  */
 
 import type { Die, StatusEffect, Enemy, GameState } from '../../types/game';
+import type { ControlType } from '../../types/dice';
 
 /** 骰子 onPlay 计算的上下文（只读快照） */
 export interface DiceOnPlayContext {
@@ -21,6 +22,13 @@ export interface DiceOnPlayContext {
   unifiedElement: string | null;
   /** 法师怒火燎原 bonus */
   furyBonusDamage: number;
+  // === v0.5 新增 ===
+  /** 本次出牌是否为普通攻击 */
+  isNormalAttack: boolean;
+  /** 本次出牌是否为战士散打（>=2颗普通攻击） */
+  isScatterAttack: boolean;
+  /** 最近一次敌方回合中玩家被打掉血的次数 */
+  hitsTakenLastTurn: number;
 }
 
 /** 骰子 onPlay 计算的增量输出 */
@@ -33,6 +41,23 @@ export interface DiceOnPlayResult {
   multiplier: number;
   holyPurify: number;
   statusEffects: StatusEffect[];
+  // === v0.5 新增 ===
+  selfDamage: number;
+  controlType: ControlType | null;
+  controlAoe: boolean;
+  bloodChain: boolean;
+  soloSeal: boolean;
+  soloSealDamageMult: number;
+  berserk: { duration: number; damageMult: number; takenMult: number; bloodCostReduction: number } | null;
+  trueDamage: number;
+  guaranteedHpPercent: number;
+  selfPointBonus: number;
+  vulnerableToRandom: number;
+  drawBonus: number;
+  permanentFaceBonus: number;
+  damagePerCleanse: number;
+  scatterBonusMult: number;
+  scatterBonusCap: number;
 }
 
 /**
@@ -48,5 +73,22 @@ export function emptyDiceOnPlayResult(): DiceOnPlayResult {
     multiplier: 1,
     holyPurify: 0,
     statusEffects: [],
+    // v0.5
+    selfDamage: 0,
+    controlType: null,
+    controlAoe: false,
+    bloodChain: false,
+    soloSeal: false,
+    soloSealDamageMult: 1,
+    berserk: null,
+    trueDamage: 0,
+    guaranteedHpPercent: 0,
+    selfPointBonus: 0,
+    vulnerableToRandom: 0,
+    drawBonus: 0,
+    permanentFaceBonus: 0,
+    damagePerCleanse: 0,
+    scatterBonusMult: 0,
+    scatterBonusCap: 0,
   };
 }

@@ -207,6 +207,8 @@ export function calculateExpectedOutcome(params: CalculateExpectedOutcomeParams)
   const unifiedElement = hasUnify && !skipOnPlay ? (selected.find(d => d.element && d.element !== 'normal')?.element || 'fire') : null;
 
   selected.forEach(d => {
+    const isNormalAttack = activeHands.includes('普通攻击') && activeHands.length === 1;
+    const isScatterAttack = isNormalAttack && selected.length > 1;
     const diceResult = processDiceOnPlayEffects(d, {
       selected,
       dice,
@@ -217,6 +219,9 @@ export function calculateExpectedOutcome(params: CalculateExpectedOutcomeParams)
       skipOnPlay,
       unifiedElement,
       furyBonusDamage,
+      isNormalAttack,
+      isScatterAttack,
+      hitsTakenLastTurn: (game as any).hitsTakenLastTurn || 0,
     });
 
     // 归并增量到主累加器
