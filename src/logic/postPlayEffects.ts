@@ -1,4 +1,4 @@
-// [RULES-B2-EXEMPT] 出牌后效主调度：on_play / on_kill / 元素 / 经验 / 战场收割 多触发分支并联，已是 SRP 拆分边界
+﻿// [RULES-B2-EXEMPT] 出牌后效主调度：on_play / on_kill / 元素 / 经验 / 战场收割 多触发分支并联，已是 SRP 拆分边界
 /**
 * postPlayEffects.ts — 出牌后效处理
 * checkEnemyDeaths 已提取到 checkEnemyDeathsModule.ts
@@ -6,7 +6,7 @@
 * ARCH-F Round2 模块拆分
 */
 
-import React from 'react';
+
 import type { Die, GameState, Enemy, HandResult, DiceElement } from '../types/game';
 import type { ExpectedOutcomeResult } from './expectedOutcomeTypes';
 import type { EnemyQuotes } from '../config/enemies';
@@ -22,15 +22,15 @@ import { STATUS_INFO } from '../data/statusInfo';
 import { rollKillXp, applyXpGain } from './xpSystem';
 import { emitXpKill } from './xpEvents';
 import { emitSoulGain } from './soulEvents';
-import { PixelRefresh, PixelDice, PixelCards, PixelHeart } from '../components/PixelIcons';
+
 import { emitReward } from './rewardEvents';
 import { tryGainKillSlot, isWarrior } from './warriorReap';
 
 // 浮字 icon 工厂（统一 size=1.5）
-const rerollIcon = () => React.createElement(PixelRefresh, { size: 1.5 });
-const diceIcon = () => React.createElement(PixelDice, { size: 1.5 });
-const cardsIcon = () => React.createElement(PixelCards, { size: 1.5 });
-const heartIcon = () => React.createElement(PixelHeart, { size: 1.5 });
+const rerollIcon = () => 'refresh';
+const diceIcon = () => 'dice';
+const cardsIcon = () => 'cards';
+const heartIcon = () => 'heart';
 /** 统一奖励类飘字颜色：金色，和扣血红/扣盾蓝区分开 */
 const REWARD_COLOR = 'text-amber-200';
 
@@ -38,7 +38,7 @@ const REWARD_COLOR = 'text-amber-200';
 
 export interface PostPlayContext {
   game: GameState;
-  gameRef: React.MutableRefObject<GameState>;
+  gameRef: { current: GameState };
   enemies: Enemy[];
   dice: Die[];
   selected: Die[];
@@ -55,25 +55,25 @@ export interface PostPlayContext {
   straightUpgrade: number;
 
   // Callbacks
-  setGame: React.Dispatch<React.SetStateAction<GameState>>;
-  setEnemies: React.Dispatch<React.SetStateAction<Enemy[]>>;
-  setDice: React.Dispatch<React.SetStateAction<Die[]>>;
-  setRerollCount: React.Dispatch<React.SetStateAction<number>>;
-  addFloatingText: (text: string, color: string, icon?: React.ReactNode, target?: string, persistent?: boolean) => void;
+  setGame: (v: GameState | ((prev: GameState) => GameState)) => void;
+  setEnemies: (v: Enemy[] | ((prev: Enemy[]) => Enemy[])) => void;
+  setDice: (v: Die[] | ((prev: Die[]) => Die[])) => void;
+  setRerollCount: (v: number | ((prev: number) => number)) => void;
+  addFloatingText: (text: string, color: string, icon?: string, target?: string, persistent?: boolean) => void;
   addToast: (msg: string, type?: string, options?: { icon?: 'gold' | 'dice' | 'relic' | 'remove' | 'check' | 'star' | 'shuffle'; relicId?: string }) => void;
   addLog: (msg: string) => void;
   playSound: (id: string) => void;
-  setScreenShake: React.Dispatch<React.SetStateAction<boolean>>;
+  setScreenShake: (v: boolean | ((prev: boolean) => boolean)) => void;
   setEnemyEffectForUid: (uid: string, effect: string | null) => void;
   showEnemyQuote: (uid: string, text: string, duration: number) => void;
   getEnemyQuotes: (configId: string) => EnemyQuotes | undefined;
   pickQuote: (quotes?: string[]) => string | undefined;
-  setBossEntrance: React.Dispatch<React.SetStateAction<{ visible: boolean; name: string; chapter: number; isFinalBoss?: boolean }>>;
-  setEnemyEffects: React.Dispatch<React.SetStateAction<Record<string, string | null>>>;
-  setDyingEnemies: React.Dispatch<React.SetStateAction<Set<string>>>;
-  setEnemyQuotes: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-  setEnemyQuotedLowHp: React.Dispatch<React.SetStateAction<Set<string>>>;
-  setWaveAnnouncement: React.Dispatch<React.SetStateAction<number | null>>;
+  setBossEntrance: (v: { visible: boolean; name: string; chapter: number; isFinalBoss?: boolean } | ((prev: { visible: boolean; name: string; chapter: number; isFinalBoss?: boolean }) => { visible: boolean; name: string; chapter: number; isFinalBoss?: boolean })) => void;
+  setEnemyEffects: (v: Record<string, string | null> | ((prev: Record<string, string | null>) => Record<string, string | null>)) => void;
+  setDyingEnemies: (v: Set<string> | ((prev: Set<string>) => Set<string>)) => void;
+  setEnemyQuotes: (v: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => void;
+  setEnemyQuotedLowHp: (v: Set<string> | ((prev: Set<string>) => Set<string>)) => void;
+  setWaveAnnouncement: (v: number | null | ((prev: number | null) => number | null)) => void;
   rollAllDice: (forceResetHand?: boolean) => Promise<void>;
   handleVictory: () => void;
 }

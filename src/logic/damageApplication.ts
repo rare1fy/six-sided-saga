@@ -1,4 +1,4 @@
-/**
+﻿/**
  * damageApplication.ts — 伤害应用逻辑
  *
  * 从 DiceHeroGame.tsx playHand() L1432-L1672 提取。
@@ -7,14 +7,14 @@
  * ARCH-F Round1 模块拆分
  */
 
-import React from 'react';
+
 import type { Die, GameState, Enemy, HandResult } from '../types/game';
 import type { ExpectedOutcomeResult } from './expectedOutcomeTypes';
 import type { EnemyQuotes } from '../config/enemies';
 import { getDiceDef } from '../data/dice';
 import { STATUS_INFO } from '../data/statusInfo';
 import { ANIMATION_TIMING } from '../config';
-import { PixelHeart, PixelShield, PixelZap } from '../components/PixelIcons';
+
 import { applyBloodFuryOnHurt, applyVengeanceToBerserkers } from './enemyTraits';
 import { applyControl } from './controlSystem';
 import { applyBloodChain } from './bloodChainSystem';
@@ -38,32 +38,32 @@ export interface DamageAppContext {
   isAoeActive: boolean;
 
   // Ref
-  playsPerEnemyRef: React.MutableRefObject<Record<string, number>>;
+  playsPerEnemyRef: { current: Record<string, number> };
 
   // Callbacks
-  setEnemies: React.Dispatch<React.SetStateAction<Enemy[]>>;
-  setGame: React.Dispatch<React.SetStateAction<GameState>>;
-  setArmorGained: React.Dispatch<React.SetStateAction<boolean>>;
-  setHpGained: React.Dispatch<React.SetStateAction<boolean>>;
-  setPlayerEffect: React.Dispatch<React.SetStateAction<string | null>>;
+  setEnemies: (v: Enemy[] | ((prev: Enemy[]) => Enemy[])) => void;
+  setGame: (v: GameState | ((prev: GameState) => GameState)) => void;
+  setArmorGained: (v: boolean | ((prev: boolean) => boolean)) => void;
+  setHpGained: (v: boolean | ((prev: boolean) => boolean)) => void;
+  setPlayerEffect: (v: string | null | ((prev: string | null) => string | null)) => void;
   setEnemyEffectForUid: (uid: string, effect: string | null) => void;
   enemyQuotedLowHp: Set<string>;
-  setEnemyQuotedLowHp: React.Dispatch<React.SetStateAction<Set<string>>>;
+  setEnemyQuotedLowHp: (v: Set<string> | ((prev: Set<string>) => Set<string>)) => void;
   /** [2026-05-09] Boss phase2（70% 血量）气泡专用 set */
   enemyQuotedPhase2: Set<string>;
-  setEnemyQuotedPhase2: React.Dispatch<React.SetStateAction<Set<string>>>;
+  setEnemyQuotedPhase2: (v: Set<string> | ((prev: Set<string>) => Set<string>)) => void;
   /** [2026-05-09 v2] BOSS 已进入第几阶段（key=uid, value=stage）
    *  跨过 phases[].hpThreshold 时累加；用于触发"阶段切换"全屏横幅 + boss_entrance 演出 */
   enemyPhaseStage: Map<string, number>;
-  setEnemyPhaseStage: React.Dispatch<React.SetStateAction<Map<string, number>>>;
+  setEnemyPhaseStage: (v: Map<string, number> | ((prev: Map<string, number>) => Map<string, number>)) => void;
   /** [2026-05-09 v2] BOSS 阶段切换全屏横幅 setter */
   setPhaseAnnouncement: (v: { stage: number; taunt: string; bossName: string } | null) => void;
-  addFloatingText: (text: string, color: string, icon?: React.ReactNode, target?: string, persistent?: boolean) => void;
+  addFloatingText: (text: string, color: string, icon?: string, target?: string, persistent?: boolean) => void;
   playSound: (id: string) => void;
   showEnemyQuote: (uid: string, text: string, duration: number) => void;
   getEnemyQuotes: (configId: string) => EnemyQuotes | undefined;
   pickQuote: (quotes?: string[]) => string | undefined;
-  setScreenShake: React.Dispatch<React.SetStateAction<boolean>>;
+  setScreenShake: (v: boolean | ((prev: boolean) => boolean)) => void;
 }
 
 // ============================================================
@@ -108,15 +108,15 @@ export function applyDamageToEnemies(ctx: DamageAppContext): {
         setTimeout(() => {
           const absorbed = Math.min(e.armor, outcome.damage);
           const hpDamage = Math.max(0, outcome.damage - absorbed);
-          if (absorbed > 0) addFloatingText(`-${absorbed}`, 'text-blue-400', React.createElement(PixelShield, { size: 1.3 }), 'enemy');
-          if (hpDamage > 0) addFloatingText(`-${hpDamage}`, 'text-red-500', React.createElement(PixelHeart, { size: 1.3 }), 'enemy');
+          if (absorbed > 0) addFloatingText(`-${absorbed}`, 'text-blue-400', 'shield', 'enemy');
+          if (hpDamage > 0) addFloatingText(`-${hpDamage}`, 'text-red-500', 'heart', 'enemy');
         }, idx * 150);
       });
     } else {
       const absorbed = Math.min(targetEnemy.armor, outcome.damage);
       const hpDamage = Math.max(0, outcome.damage - absorbed);
-      if (absorbed > 0) addFloatingText(`-${absorbed}`, 'text-blue-400', React.createElement(PixelShield, { size: 1.3 }), 'enemy');
-      if (hpDamage > 0) setTimeout(() => addFloatingText(`-${hpDamage}`, 'text-red-500', React.createElement(PixelHeart, { size: 1.3 }), 'enemy'), absorbed > 0 ? 150 : 0);
+      if (absorbed > 0) addFloatingText(`-${absorbed}`, 'text-blue-400', 'shield', 'enemy');
+      if (hpDamage > 0) setTimeout(() => addFloatingText(`-${hpDamage}`, 'text-red-500', 'heart', 'enemy'), absorbed > 0 ? 150 : 0);
     }
   }
 
@@ -124,13 +124,13 @@ export function applyDamageToEnemies(ctx: DamageAppContext): {
   if (outcome.armor > 0) {
     setArmorGained(true);
     playSound('armor');
-    addFloatingText(`+${outcome.armor}`, 'text-blue-400', React.createElement(PixelShield, { size: 1.3 }), 'player');
+    addFloatingText(`+${outcome.armor}`, 'text-blue-400', 'shield', 'player');
     setTimeout(() => setArmorGained(false), 500);
   }
   if (outcome.heal > 0) {
     setHpGained(true);
     playSound('heal');
-    addFloatingText(`+${outcome.heal}`, 'text-emerald-500', React.createElement(PixelHeart, { size: 1.3 }), 'player');
+    addFloatingText(`+${outcome.heal}`, 'text-emerald-500', 'heart', 'player');
     setTimeout(() => setHpGained(false), 500);
   }
   
@@ -219,7 +219,7 @@ export function applyDamageToEnemies(ctx: DamageAppContext): {
       curr.forEach(before => {
         const after = withVengeance.find(x => x.uid === before.uid);
         if (after && (after.vengeance || 0) > (before.vengeance || 0)) {
-          addFloatingText(`复仇 ×${after.vengeance}`, 'text-red-400 font-bold', React.createElement(PixelZap, { size: 1.6 }), 'enemy', true);
+          addFloatingText(`复仇 ×${after.vengeance}`, 'text-red-400 font-bold', 'zap', 'enemy', true);
           anyTriggered = true;
         }
       });
@@ -392,7 +392,7 @@ export function applyDamageToEnemies(ctx: DamageAppContext): {
         curr.forEach(before => {
           const after = withVengeance.find(x => x.uid === before.uid);
           if (after && (after.vengeance || 0) > (before.vengeance || 0)) {
-            addFloatingText(`复仇 ×${after.vengeance}`, 'text-red-400 font-bold', React.createElement(PixelZap, { size: 1.6 }), 'enemy', true);
+            addFloatingText(`复仇 ×${after.vengeance}`, 'text-red-400 font-bold', 'zap', 'enemy', true);
             anyTriggered = true;
           }
         });

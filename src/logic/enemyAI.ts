@@ -1,4 +1,4 @@
-// [RULES-B2-EXEMPT] 敌人回合 AI 主调度：5 种 combatType 各自决策路径已不可再拆（每分支独立闭包+异步动画）
+﻿// [RULES-B2-EXEMPT] 敌人回合 AI 主调度：5 种 combatType 各自决策路径已不可再拆（每分支独立闭包+异步动画）
 /**
  * enemyAI.ts — 敌人回合AI逻辑
  * 
@@ -15,8 +15,12 @@
  */
 
 import type { Enemy, GameState, Die, Relic } from '../types/game';
-import * as ReactNS from 'react';
-import { PixelArcaneShield, PixelHeart, PixelShield, PixelArcaneSkull, PixelCards } from '../components/PixelIcons';
+// Icon identifiers (string-based, no React dependency)
+const ICON_ARCANE_SHIELD = 'arcane-shield';
+const ICON_HEART = 'heart';
+const ICON_SHIELD = 'shield';
+const ICON_ARCANE_SKULL = 'arcane-skull';
+const ICON_CARDS = 'cards';
 import type { buildRelicContext as BuildRelicContextFn } from '../engine/buildRelicContext';
 import { hasFatalProtection as HasFatalProtectionFn } from '../engine/relicQueries';
 import { triggerHourglass as TriggerHourglassFn } from '../engine/relicUpdates';
@@ -40,16 +44,7 @@ import {
 import { getDotMultiplier as getDotMultiplierForDispatch } from './enemyTraits';
 import { GUARDIAN_CONFIG, ENEMY_ATTACK_MULT, ANIMATION_TIMING } from '../config';
 
-/** 奥术屏障吸收飘字用的 icon，独立一处避免重复 createElement */
-const arcaneShieldIcon = () => ReactNS.createElement(PixelArcaneShield, { size: 1.5 });
-/** 玩家 HP 增减飘字用的像素爱心 icon */
-const heartIcon = () => ReactNS.createElement(PixelHeart, { size: 1.3 });
-/** 护甲吸收/获得飘字的盾牌 icon */
-const shieldIcon = () => ReactNS.createElement(PixelShield, { size: 1.3 });
-/** 法术反噬专用：紫色骷髅，法师专属不可净化 debuff */
-const arcaneSkullIcon = () => ReactNS.createElement(PixelArcaneSkull, { size: 1.3 });
-/** 战场收割·完防奖励飘字 icon（手牌图标） */
-const cardsIcon = () => ReactNS.createElement(PixelCards, { size: 1.5 });
+
 /** 战场收割·完防奖励统一金色（与全局奖励色一致） */
 const REWARD_COLOR = 'text-amber-200';
 import { settleEnemyBurn, settleEnemyPoison, type DotLogEntry } from './enemyStatusSettlement';
@@ -64,12 +59,12 @@ export interface EnemyAICallbacks {
   setEnemyEffectForUid: (uid: string, effect: string | null) => void;
   enemyPreAction: (e: Enemy, quoteType: string) => Promise<boolean>;
   addLog: (msg: string) => void;
-  /** [Y1] icon 参数为 string 类型（非 React.ReactNode），逻辑层不依赖 React */
-  addFloatingText: (text: string, color: string, icon?: React.ReactNode, target?: 'player' | 'enemy', large?: boolean) => void;
+  /** [Y1] icon 参数为 string 标识符，逻辑层不依赖任何 UI 框架 */
+  addFloatingText: (text: string, color: string, icon?: string, target?: 'player' | 'enemy', large?: boolean) => void;
   addToast: (msg: string, type: string, options?: { icon?: 'gold' | 'dice' | 'relic' | 'remove' | 'check' | 'star' | 'shuffle'; relicId?: string }) => void;
   playSound: (id: string) => void;
   setScreenShake: (v: boolean) => void;
-  setPlayerEffect: React.Dispatch<React.SetStateAction<string | null>>;
+  setPlayerEffect: (v: string | null | ((prev: string | null) => string | null)) => void;
   showEnemyQuote: (uid: string, text: string, duration?: number) => void;
   /** 延迟台词执行器：接收 DelayedQuoteAction 描述，在 UI 层调度定时器 */
   scheduleDelayedQuote: (action: DelayedQuoteAction) => void;
@@ -187,11 +182,11 @@ export async function executeEnemyTurn(
     const absorb = absorbPlayerDamage(poisonDamage, prev.chantShield || 0, prev.armor, true);
     if (absorb.absorbedByShield > 0) {
       cb.addLog(`奥术屏障吸收了 ${absorb.absorbedByShield} 点中毒伤害。`);
-      cb.addFloatingText(`-${absorb.absorbedByShield}`, 'text-cyan-300', arcaneShieldIcon(), 'player');
+      cb.addFloatingText(`-${absorb.absorbedByShield}`, 'text-cyan-300', ICON_ARCANE_SHIELD, 'player');
     }
     if (absorb.hpDamage > 0) {
       cb.addLog(`你因中毒受到了 ${absorb.hpDamage} 点伤害。`);
-      cb.addFloatingText(`-${absorb.hpDamage}`, 'text-purple-400', heartIcon(), 'player');
+      cb.addFloatingText(`-${absorb.hpDamage}`, 'text-purple-400', ICON_HEART, 'player');
     }
     // 吟唱受击罚（用入射 poisonDamage 判定，屏障吸收也算"被打扰"）
     const penalty = calcMageChantHitPenalty(prev.playerClass, prev.chargeStacks, prev.mageChantHitCount, poisonDamage);
@@ -215,7 +210,7 @@ export async function executeEnemyTurn(
     }
     return { ...prev, hp: newHp, chantShield: absorb.newShield, statuses: nextStatuses, mageChantHitCount: newHitCount, arcaneBackfire: newBackfire };
   });
-  if (chantPenaltyStacks > 0) cb.addFloatingText(`法术反噬: +${chantPenaltyStacks}`, 'text-fuchsia-400', arcaneSkullIcon(), 'player');
+  if (chantPenaltyStacks > 0) cb.addFloatingText(`法术反噬: +${chantPenaltyStacks}`, 'text-fuchsia-400', ICON_ARCANE_SKULL, 'player');
 
   await new Promise(r => setTimeout(r, 600));
   if (cb.gameRef.current.hp <= 0) { cb.playSound('player_death'); return { hp: 0, waveTransitioned: false }; }
@@ -425,7 +420,7 @@ export async function executeEnemyTurn(
             const target = candidates[Math.floor(Math.random() * candidates.length)];
             const armorVal = Math.floor((action?.value ?? 5) * (1 + 0.3 * wrath));
             cb.setEnemies(prev => prev.map(en => en.uid === target.uid ? { ...en, armor: en.armor + armorVal } : en));
-            cb.addFloatingText(`护甲+${armorVal}`, 'text-cyan-400', shieldIcon(), 'enemy');
+            cb.addFloatingText(`护甲+${armorVal}`, 'text-cyan-400', ICON_SHIELD, 'enemy');
             cb.addLog(`${e.name} 为 ${target.name} 施加护甲祝福（+${armorVal}护甲${wrath > 0 ? `，圣怒×${wrath}` : ''}）！`);
           }
         }
@@ -522,9 +517,9 @@ export async function executeEnemyTurn(
 
       // [BUGFIX 2026-05-09] 副作用（飘字/音效/log/特效/台词）只在第一次执行——StrictMode 双触发守护
       if (!mainCounted) {
-        if (absorb.absorbedByShield > 0) cb.addFloatingText(`-${absorb.absorbedByShield}`, 'text-cyan-300', arcaneShieldIcon(), 'player');
-        if (absorb.absorbedByArmor > 0) cb.addFloatingText(`-${absorb.absorbedByArmor}`, 'text-blue-400', shieldIcon(), 'player');
-        if (absorb.hpDamage > 0) cb.addFloatingText(`-${absorb.hpDamage}`, 'text-red-500', heartIcon(), 'player');
+        if (absorb.absorbedByShield > 0) cb.addFloatingText(`-${absorb.absorbedByShield}`, 'text-cyan-300', ICON_ARCANE_SHIELD, 'player');
+        if (absorb.absorbedByArmor > 0) cb.addFloatingText(`-${absorb.absorbedByArmor}`, 'text-blue-400', ICON_SHIELD, 'player');
+        if (absorb.hpDamage > 0) cb.addFloatingText(`-${absorb.hpDamage}`, 'text-red-500', ICON_HEART, 'player');
         if (absorb.absorbedByShield === 0 && absorb.absorbedByArmor === 0 && absorb.hpDamage === 0) cb.addFloatingText('0', 'text-gray-400', undefined, 'player');
 
         cb.setPlayerEffect('flash');
@@ -566,7 +561,7 @@ export async function executeEnemyTurn(
       mainCounted = true;
       return { ...prev, hp: newHp, armor: absorb.newArmor, chantShield: absorb.newShield, mageChantHitCount: newHitCount, arcaneBackfire: newBackfire, hpLostThisTurn: (prev.hpLostThisTurn || 0) + hpLost, hpLostThisBattle: (prev.hpLostThisBattle || 0) + hpLost, hitsTakenLastTurn: (prev.hitsTakenLastTurn || 0) + (absorb.hpDamage > 0 ? 1 : 0), ...blockUpd };
     });
-    if (chantPenaltyMain > 0) cb.addFloatingText(`法术反噬: +${chantPenaltyMain}`, 'text-fuchsia-400', arcaneSkullIcon(), 'player');
+    if (chantPenaltyMain > 0) cb.addFloatingText(`法术反噬: +${chantPenaltyMain}`, 'text-fuchsia-400', ICON_ARCANE_SKULL, 'player');
 
     // on_damage_taken 遗物
     const latestGame = cb.gameRef.current;
@@ -613,9 +608,9 @@ export async function executeEnemyTurn(
         const newHp = Math.max(0, prev.hp - absorb2.hpDamage);
         const hpLost = prev.hp - newHp;
 
-        if (absorb2.absorbedByShield > 0 && !rangerCounted) cb.addFloatingText(`-${absorb2.absorbedByShield}`, 'text-cyan-300', arcaneShieldIcon(), 'player');
-        if (absorb2.absorbedByArmor > 0 && !rangerCounted) cb.addFloatingText(`-${absorb2.absorbedByArmor}`, 'text-blue-400', shieldIcon(), 'player');
-        if (absorb2.hpDamage > 0 && !rangerCounted) cb.addFloatingText(`-${absorb2.hpDamage}`, 'text-orange-400', heartIcon(), 'player');
+        if (absorb2.absorbedByShield > 0 && !rangerCounted) cb.addFloatingText(`-${absorb2.absorbedByShield}`, 'text-cyan-300', ICON_ARCANE_SHIELD, 'player');
+        if (absorb2.absorbedByArmor > 0 && !rangerCounted) cb.addFloatingText(`-${absorb2.absorbedByArmor}`, 'text-blue-400', ICON_SHIELD, 'player');
+        if (absorb2.hpDamage > 0 && !rangerCounted) cb.addFloatingText(`-${absorb2.hpDamage}`, 'text-orange-400', ICON_HEART, 'player');
 
         const penalty = calcMageChantHitPenalty(prev.playerClass, prev.chargeStacks, prev.mageChantHitCount, secondHit);
         let newHitCount = prev.mageChantHitCount;
@@ -643,7 +638,7 @@ export async function executeEnemyTurn(
         rangerCounted = true;
         return { ...prev, hp: newHp, armor: absorb2.newArmor, chantShield: absorb2.newShield, mageChantHitCount: newHitCount, arcaneBackfire: newBackfire, hpLostThisTurn: (prev.hpLostThisTurn || 0) + hpLost, hpLostThisBattle: (prev.hpLostThisBattle || 0) + hpLost, ...blockUpd2 };
       });
-      if (chantPenaltyR > 0) cb.addFloatingText(`法术反噬: +${chantPenaltyR}`, 'text-fuchsia-400', arcaneSkullIcon(), 'player');
+      if (chantPenaltyR > 0) cb.addFloatingText(`法术反噬: +${chantPenaltyR}`, 'text-fuchsia-400', ICON_ARCANE_SKULL, 'player');
       cb.addLog(`${e.name} 追击造成 ${loggedSecondHit} 伤害！`);
       cb.playSound('enemy');
     }
@@ -700,7 +695,7 @@ export async function executeEnemyTurn(
 
     // 完美防御本次攻击合并飘字（含主攻+追击的累计）
     if (blockGained > 0) {
-      cb.addFloatingText(`完美防御: +${blockGained}`, REWARD_COLOR, cardsIcon(), 'player');
+      cb.addFloatingText(`完美防御: +${blockGained}`, REWARD_COLOR, ICON_CARDS, 'player');
       emitReward('card', blockGained);
     }
 
@@ -765,11 +760,11 @@ export async function executeEnemyTurn(
     const absorb = absorbPlayerDamage(burnDamage, prev.chantShield || 0, prev.armor, true);
     if (absorb.absorbedByShield > 0) {
       cb.addLog(`奥术屏障吸收了 ${absorb.absorbedByShield} 点灼烧伤害。`);
-      cb.addFloatingText(`-${absorb.absorbedByShield}`, 'text-cyan-300', arcaneShieldIcon(), 'player');
+      cb.addFloatingText(`-${absorb.absorbedByShield}`, 'text-cyan-300', ICON_ARCANE_SHIELD, 'player');
     }
     if (absorb.hpDamage > 0) {
       cb.addLog(`你因灼烧受到了 ${absorb.hpDamage} 点伤害。`);
-      cb.addFloatingText(`-${absorb.hpDamage}`, 'text-orange-500', heartIcon(), 'player');
+      cb.addFloatingText(`-${absorb.hpDamage}`, 'text-orange-500', ICON_HEART, 'player');
     }
     nextStatuses = tickStatuses(nextStatuses);
     // 吟唱被灼烧打扰（用入射 burnDamage，屏障吸收也算；累加不可净化的 arcaneBackfire）
@@ -798,7 +793,7 @@ export async function executeEnemyTurn(
     returnHp = newHp;
     return { ...prev, battleTurn: nextTurn, hp: newHp, chantShield: absorb.newShield, statuses: nextStatuses, mageChantHitCount: newHitCount, arcaneBackfire: newBackfire, isEnemyTurn: false, relics: relicsAfterCooldown };
   });
-  if (chantPenaltyBurn > 0) cb.addFloatingText(`法术反噬: +${chantPenaltyBurn}`, 'text-fuchsia-400', arcaneSkullIcon(), 'player');
+  if (chantPenaltyBurn > 0) cb.addFloatingText(`法术反噬: +${chantPenaltyBurn}`, 'text-fuchsia-400', ICON_ARCANE_SKULL, 'player');
 
   return { hp: returnHp, waveTransitioned: false };
 }

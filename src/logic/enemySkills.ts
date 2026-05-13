@@ -1,4 +1,4 @@
-/**
+﻿/**
  * enemySkills.ts — 敌人技能逻辑（Priest / Caster）+ 状态辅助
  * 从 enemyAI.ts 拆分，ARCH-6 Round 2
  *
@@ -12,10 +12,11 @@
  *   4. priest 不再随机给盟友自加力量（违背\"无直伤\"的辅助定位）
  */
 
-import React from 'react';
 import type { Enemy, GameState, StatusEffect } from '../types/game';
 import { PRIEST_CONFIG, CASTER_CONFIG } from '../config';
-import { PixelHeart, PixelShield } from '../components/PixelIcons';
+
+const ICON_HEART = 'heart';
+const ICON_SHIELD = 'shield';
 import { getDotMultiplier, getHolyWrath } from './enemyTraits';
 
 // === 状态辅助 ===
@@ -74,7 +75,7 @@ export interface PriestSkillResult {
   /** 日志消息 */
   logs: string[];
   /** 浮动文字 */
-  floats: Array<{ text: string; color: string; target: string; icon?: React.ReactNode }>;
+  floats: Array<{ text: string; color: string; target: string; icon?: string }>;
   /** 音效 */
   sound?: string;
 }
@@ -122,7 +123,7 @@ export function executePriestSkill(
       hp: Math.min(lowestAlly.maxHp, lowestAlly.hp + healVal),
     });
     result.logs.push(`${e.name} 治疗了 ${lowestAlly.name} ${healVal} HP${wrath > 0 ? `（圣怒×${wrath}）` : ''}。`);
-    result.floats.push({ text: `+${healVal}`, color: 'text-emerald-500', target: 'enemy', icon: React.createElement(PixelHeart, { size: 1.3 }) });
+    result.floats.push({ text: `+${healVal}`, color: 'text-emerald-500', target: 'enemy', icon: ICON_HEART });
     result.sound = 'enemy_heal';
   } else if (!isInquisitor && selfDamaged) {
     const healVal = Math.max(1, Math.floor(e.attackDmg * PRIEST_CONFIG.healSelfMult * (1 + 0.2 * wrath)));
@@ -138,7 +139,7 @@ export function executePriestSkill(
       armor: target.armor + armorVal,
     });
     result.logs.push(`${e.name} 为 ${target.name} 施加了护甲祝福（+${armorVal}护甲${wrath > 0 ? `，圣怒×${wrath}` : ''}）！`);
-    result.floats.push({ text: `护甲+${armorVal}`, color: 'text-cyan-400', target: 'enemy', icon: React.createElement(PixelShield, { size: 1.3 }) });
+    result.floats.push({ text: `护甲+${armorVal}`, color: 'text-cyan-400', target: 'enemy', icon: ICON_SHIELD });
   } else {
     // inquisitor 落到这里：永远 debuff 玩家
     // - 50% 概率施加 weak + vulnerable 双 debuff（核心机制：双重削弱）
@@ -190,7 +191,7 @@ export interface CasterSkillResult {
   /** 日志消息 */
   logs: string[];
   /** 浮动文字 */
-  floats: Array<{ text: string; color: string; target: string; delay?: number; icon?: React.ReactNode }>;
+  floats: Array<{ text: string; color: string; target: string; delay?: number; icon?: string }>;
 }
 
 /**

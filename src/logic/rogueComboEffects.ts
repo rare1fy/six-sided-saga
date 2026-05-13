@@ -1,4 +1,4 @@
-/**
+﻿/**
  * rogueComboEffects.ts — 影锋刺客连击效果处理
  *
  * ARCH-I: 从 useBattleCombat.tsx playHand 中提取的影锋刺客职业专属连击逻辑。
@@ -9,9 +9,9 @@
  * 总是获得1次额外免费重投，与"重掷骰子应算回合内"的设计意图一致。
  */
 
-import React from 'react';
+
 import type { GameState } from '../types/game';
-import { PixelRefresh } from '../components/PixelIcons';
+
 import { emitReward } from './rewardEvents';
 
 /** 奖励类飘字统一金色 */
@@ -19,7 +19,7 @@ const REWARD_COLOR = 'text-amber-200';
 
 /** 连击效果回调集合 */
 export interface RogueComboCallbacks {
-  setGame: React.Dispatch<React.SetStateAction<GameState>>;
+  setGame: (v: GameState | ((prev: GameState) => GameState)) => void;
   addFloatingText: (text: string, className: string, icon: unknown, target: string) => void;
 }
 
@@ -45,7 +45,7 @@ export function handleRogueComboPrep(
   if (playerClass === 'rogue' && currentCombo === 0) {
     cb.setGame(prev => ({ ...prev, comboFreeReroll: (prev.comboFreeReroll || 0) + 1 }));
     setTimeout(() => {
-      cb.addFloatingText('连击袖箭: +1', REWARD_COLOR, React.createElement(PixelRefresh, { size: 1.5 }), 'player');
+      cb.addFloatingText('连击袖箭: +1', REWARD_COLOR, 'refresh', 'player');
       emitReward('reroll', 1);
     }, 200);
   }

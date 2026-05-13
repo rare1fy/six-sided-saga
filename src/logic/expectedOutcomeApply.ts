@@ -1,11 +1,11 @@
-/**
+﻿/**
  * expectedOutcome 副作用执行 — 从 expectedOutcomeCalc.ts 提取，ARCH-12
  *
  * 职责：执行 calculateExpectedOutcome 返回的 PendingSideEffect[]
  * 注意：本模块依赖 Dispatch（非纯函数），与纯计算逻辑分离。
  */
 
-import type { Dispatch, SetStateAction } from 'react';
+
 import type { GameState } from '../types/game';
 import type { PendingSideEffect } from './expectedOutcomeTypes';
 
@@ -14,8 +14,8 @@ import type { PendingSideEffect } from './expectedOutcomeTypes';
  */
 export function applyPendingSideEffects(
   effects: PendingSideEffect[],
-  setGame: Dispatch<SetStateAction<GameState>>,
-  setRerollCount: Dispatch<SetStateAction<number>>,
+  setGame: (v: GameState | ((prev: GameState) => GameState)) => void,
+  setRerollCount: (v: number | ((prev: number) => number)) => void,
 ) {
   effects.forEach(eff => {
     switch (eff.type) {

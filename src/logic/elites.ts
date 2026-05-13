@@ -1,4 +1,4 @@
-/**
+﻿/**
  * elites.ts — 精英 / Boss 增强逻辑与判定
  * 从 enemyAI.ts 拆分，ARCH-6 Round 2
  *
@@ -8,10 +8,11 @@
  * - 精英/Boss 叠护甲逻辑
  */
 
-import React from 'react';
+
 import type { Enemy, GameState } from '../types/game';
 import { ELITE_CONFIG } from '../config';
-import { PixelShield, PixelArcaneShield } from '../components/PixelIcons';
+const ICON_SHIELD = 'shield';
+const ICON_ARCANE_SHIELD = 'arcane-shield';
 
 // === 判定函数 ===
 
@@ -33,7 +34,7 @@ export interface EliteDiceResult {
   /** 日志消息 */
   logs: string[];
   /** 浮动文字 */
-  floats: Array<{ text: string; color: string; target: string; icon?: React.ReactNode }>;
+  floats: Array<{ text: string; color: string; target: string; icon?: string }>;
   /** 音效 */
   sound?: string;
   /** 是否触发了效果（需要延时等待） */
@@ -102,7 +103,7 @@ export interface EliteArmorResult {
   /** 日志消息 */
   log: string;
   /** 浮动文字 */
-  float: { text: string; color: string; target: string; icon?: React.ReactNode };
+  float: { text: string; color: string; target: string; icon?: string };
   /** 音效 */
   sound: string;
   /** 是否触发 */
@@ -128,7 +129,7 @@ export function processEliteArmor(
     return {
       armorVal,
       log: `${enemy.name} 凝聚了护甲（+${armorVal}）！`,
-      float: { text: `护甲+${armorVal}`, color: 'text-cyan-400', target: 'enemy', icon: React.createElement(PixelShield, { size: 1.3 }) },
+      float: { text: `护甲+${armorVal}`, color: 'text-cyan-400', target: 'enemy', icon: ICON_SHIELD },
       sound: 'enemy_defend',
       triggered: true,
       isBossResult: false,
@@ -140,7 +141,7 @@ export function processEliteArmor(
     return {
       armorVal,
       log: `${enemy.name} 释放了护盾（+${armorVal}护甲）！`,
-      float: { text: `护盾+${armorVal}`, color: 'text-cyan-300', target: 'enemy', icon: React.createElement(PixelArcaneShield, { size: 1.3 }) },
+      float: { text: `护盾+${armorVal}`, color: 'text-cyan-300', target: 'enemy', icon: ICON_ARCANE_SHIELD },
       sound: 'enemy_defend',
       triggered: true,
       isBossResult: true,

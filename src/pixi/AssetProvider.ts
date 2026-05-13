@@ -18,6 +18,7 @@ import type { Application } from 'pixi.js';
 import * as Icons from '../data/pixelIconData';
 import { RELIC_PIXEL_DATA, DEFAULT_ICON } from '../data/relicPixelData';
 import { ENEMY_SPRITES } from '../data/enemySprites';
+import { ENEMY_IMAGE_MAP } from '../data/enemyImageMap';
 
 // ============================================================
 // Types
@@ -105,6 +106,25 @@ export function getEnemySprite(enemyName: string, pixelSize: number = 4): Sprite
   if (_cache.has(cacheKey)) {
     return new Sprite(_cache.get(cacheKey)!);
   }
+
+  // 优先：PNG 图片模式
+  const imageUrl = ENEMY_IMAGE_MAP[enemyName];
+  if (imageUrl) {
+    const sp = Sprite.from(imageUrl);
+    const targetSize = pixelSize * 16;
+    // 等比缩放到目标尺寸
+    if (sp.texture.valid) {
+      const scale = targetSize / Math.max(sp.texture.width, sp.texture.height);
+      sp.scale.set(scale, scale);
+    } else {
+      sp.texture.baseTexture.once('loaded', () => {
+        const scale = targetSize / Math.max(sp.texture.width, sp.texture.height);
+        sp.scale.set(scale, scale);
+      });
+    }
+    return sp;
+  }
+
   if (_config.mode === 'atlas') {
     return _getFromAtlas(cacheKey, `enemy_${enemyName}`, pixelSize * 16);
   }

@@ -1,11 +1,10 @@
-/**
+﻿/**
  * settlement/types.ts — 结算演出接口定义
  *
  * ARCH-17 从 settlementAnimation.ts 拆出
  * 原文件 L20-L72：SettlementContext + SettlementData
  */
 
-import type React from 'react';
 import type { Die, GameState, Enemy, HandResult, StatusEffect } from '../../types/game';
 import type { ExpectedOutcomeResult } from '../expectedOutcomeTypes';
 
@@ -16,7 +15,7 @@ import type { ExpectedOutcomeResult } from '../expectedOutcomeTypes';
 export interface SettlementContext {
   // State 快照
   game: GameState;
-  gameRef: React.MutableRefObject<GameState>;
+  gameRef: { current: GameState };
   enemies: Enemy[];
   dice: Die[];
   currentHands: HandResult;
@@ -28,16 +27,16 @@ export interface SettlementContext {
   isAoeActive: boolean;
 
   // Callbacks — React setState 稳定引用
-  setSettlementData: React.Dispatch<React.SetStateAction<SettlementData | null>>;
-  setSettlementPhase: React.Dispatch<React.SetStateAction<string | null>>;
-  setShowRelicPanel: React.Dispatch<React.SetStateAction<boolean>>;
-  setShowDamageOverlay: React.Dispatch<React.SetStateAction<{ damage: number; armor: number; heal: number } | null>>;
-  setScreenShake: React.Dispatch<React.SetStateAction<boolean>>;
-  setFlashingRelicIds: React.Dispatch<React.SetStateAction<string[]>>;
-  setGame: React.Dispatch<React.SetStateAction<GameState>>;
+  setSettlementData: (v: SettlementData | null | ((prev: SettlementData | null) => SettlementData | null)) => void;
+  setSettlementPhase: (v: string | null | ((prev: string | null) => string | null)) => void;
+  setShowRelicPanel: (v: boolean | ((prev: boolean) => boolean)) => void;
+  setShowDamageOverlay: (v: { damage: number; armor: number; heal: number } | null | ((prev: { damage: number; armor: number; heal: number } | null) => { damage: number; armor: number; heal: number } | null)) => void;
+  setScreenShake: (v: boolean | ((prev: boolean) => boolean)) => void;
+  setFlashingRelicIds: (v: string[] | ((prev: string[]) => string[])) => void;
+  setGame: (v: GameState | ((prev: GameState) => GameState)) => void;
   addLog: (msg: string) => void;
   addToast: (msg: string, type?: string, options?: { icon?: 'gold' | 'dice' | 'relic' | 'remove' | 'check' | 'star' | 'shuffle'; relicId?: string }) => void;
-  addFloatingText: (text: string, color: string, icon?: React.ReactNode, target?: string, persistent?: boolean) => void;
+  addFloatingText: (text: string, color: string, icon?: string, target?: string, persistent?: boolean) => void;
   playSound: (id: string) => void;
   playSettlementTick: (idx: number) => void;
   playMultiplierTick: (idx: number) => void;

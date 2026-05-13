@@ -9,15 +9,19 @@
  * - 粒子光晕：小方块粒子沿椭圆轨道环绕飘动，密集叠加形成动态光晕
  * - 呼吸动画：整体 alpha 随 sin 波动，模拟原版 CSS drop-shadow 呼吸
  */
-import { Container, Text, TextStyle } from 'pixi.js';
+import { Container, Text, TextStyle, Sprite } from 'pixi.js';
 import { Graphics } from 'pixi.js';
 import type { GameScene } from '../SceneManager';
 import type { GameApp } from '../GameApp';
-import { createButton, createText, COLORS, FONT, S } from '../UIFactory';
+import { createText, COLORS, FONT, S } from '../UIFactory';
 import { getPixelSprite, getIcon } from '../AssetProvider';
 import { playSfx } from '../SoundBridge';
 import { TweenManager, Ease } from '../animation/Tween';
 import { SoulShopModal } from '../ui/SoulShopModal';
+import imgStartN from '../../assets/img_btn_start_normal.png';
+import imgStartP from '../../assets/img_btn_start_pressed.png';
+import imgShopN from '../../assets/img_btn_soulshop_normal.png';
+import imgShopP from '../../assets/img_btn_soulshop_pressed.png';
 
 const W = 720;
 const s = (v: number) => Math.round(v * S);
@@ -214,7 +218,7 @@ export class StartScene implements GameScene {
     const shopBtnH = s(36);
     const tutH = s(14);
     this.contentTotalH = diceSize + diceGap + titleH + s(8) + subH + s(40)
-      + btnH + s(16) + shopBtnH + s(20) + tutH;
+      + btnH + s(28) + shopBtnH + s(20) + tutH;
     let curY = 0;
     this.createGoldDice(content, curY + diceSize / 2);
     curY += diceSize + diceGap;
@@ -223,7 +227,7 @@ export class StartScene implements GameScene {
     this.createSubtitle(content, curY);
     curY += subH + s(40);
     this.createStartButton(content, curY);
-    curY += btnH + s(16);
+    curY += btnH + s(28);
     this.createShopButton(content, curY);
     curY += shopBtnH + s(20);
     this.createTutorialButton(content, curY);
@@ -494,69 +498,135 @@ export class StartScene implements GameScene {
 
   // ===== 按钮 =====
 
-  private layoutIconAndTextInButton(
-    btn: Container, btnW: number, btnH: number,
-    icon: Container, iconGap: number,
+  /** 构建图片按钮：两张独立图片做Normal/Pressed切换 */
+  private buildImageButton(
+    parent: Container, topY: number,
+    normalUrl: string, pressedUrl: string,
+    label: string, btnW: number,
+    iconName: string, iconSize: number,
+    textColor: number, fontSize: number,
+    onTap: () => void,
+    /** 文字垂直位置系数 0~1, 默认0.45 */
+    contentY = 0.45,
+    /** 是否加粒子光晕 */
+    withAura = false,
   ) {
-    const contentLayer = (btn as any).contentLayer as Container | undefined;
-    if (!contentLayer) return;
-    const textChild = contentLayer.children.find(c => c instanceof Text) as Text | undefined;
-    if (!textChild) return;
-    const totalW = icon.width + iconGap + textChild.width;
-    const startX = (btnW - totalW) / 2;
-    icon.x = startX;
-    icon.y = (btnH - 4) / 2 - icon.height / 2;
-    contentLayer.addChild(icon);
-    textChild.anchor.set(0, 0.5);
-    textChild.x = startX + icon.width + iconGap;
-    textChild.y = (btnH - 4) / 2;
+    const wrapper = new Container();
+    wrapper.eventMode = 'static';
+    wrapper.cursor = 'pointer';
+
+    const normalBg = Sprite.from(normalUrl);
+    const pressedBg = Sprite.from(pressedUrl);
+
+    // 等图片加载完再布局
+    const tryLayout = () => {
+      if (!normalBg.texture.valid || !pressedBg.texture.valid) return;
+
+      // 等比缩放到目标宽度
+      const scale = btnW / normalBg.texture.width;
+      normalBg.scale.set(scale, scale);
+      pressedBg.scale.set(scale, scale);
+      pressedBg.visible = false;
+      wrapper.addChild(normalBg);
+      wrapper.addChild(pressedBg);
+
+      const btnH = normalBg.height;
+
+      // 图标 + 文字
+      const icon = getIcon(iconName, iconSize);
+      const text = createText(label, {
+        size: fontSize, color: textColor, bold: true,
+        shadow: true, shadowDistance: Math.round(S * 2), shadowAlpha: 0.9,
+      });
+      const gap = s(6);
+      const totalW = icon.width + gap + text.width;
+      const startX = (btnW - totalW) / 2;
+      const cy = btnH * contentY;
+
+      icon.anchor?.set(0, 0.5);
+      icon.x = startX;
+      icon.y = cy;
+      text.anchor.set(0, 0.5);
+      text.x = startX + icon.width + gap;
+      text.y = cy;
+
+      const contentLayer = new Container();
+      contentLayer.addChild(icon);
+      contentLayer.addChild(text);
+      wrapper.addChild(contentLayer);
+
+      // 按下：切换背景 + 文字图标跟随下移
+      const pressOff = Math.round(2 * S);
+      wrapper.on('pointerdown', () => {
+        normalBg.visible = false;
+        pressedBg.visible = true;
+        contentLayer.y = pressOff;
+      });
+      wrapper.on('pointerup', () => {
+        normalBg.visible = true;
+        pressedBg.visible = false;
+        contentLayer.y = 0;
+      });
+      wrapper.on('pointerupoutside', () => {
+        normalBg.visible = true;
+        pressedBg.visible = false;
+        contentLayer.y = 0;
+      });
+      wrapper.on('pointertap', onTap);
+
+      // 光晕
+      if (withAura) {
+        const aura = this.createParticleAura(
+          btnW / 2, btnH / 2, 0x3cc864,
+          [
+            { radiusScale: 1.2, count: 8, sizeRange: [s(3), s(5)] },
+            { radiusScale: 2.0, count: 6, sizeRange: [s(2), s(4)] },
+          ],
+        );
+        aura.container.x = btnW / 2;
+        aura.container.y = btnH / 2;
+        wrapper.addChildAt(aura.container, 0);
+        this.btnAura = aura;
+      }
+    };
+
+    // 确保纹理加载完成
+    if (normalBg.texture.valid && pressedBg.texture.valid) {
+      tryLayout();
+    } else {
+      let loaded = 0;
+      const onLoaded = () => { if (++loaded >= 2) tryLayout(); };
+      if (normalBg.texture.valid) loaded++; else normalBg.texture.baseTexture.once('loaded', onLoaded);
+      if (pressedBg.texture.valid) loaded++; else pressedBg.texture.baseTexture.once('loaded', onLoaded);
+      if (loaded >= 2) tryLayout();
+    }
+
+    wrapper.x = (W - btnW) / 2;
+    wrapper.y = topY;
+    parent.addChild(wrapper);
   }
 
   private createStartButton(parent: Container, topY: number) {
-    const btnW = s(220);
-    const btnH = s(40);
-    const btnWrapper = new Container();
-
-    // 1) 按钮粒子光晕（椭圆形，扁平贴合按钮形状）
-    const aura = this.createParticleAura(
-      btnW / 2, btnH / 2, 0x3cc864,
-      [
-        { radiusScale: 1.2, count: 8, sizeRange: [s(3), s(5)] },
-        { radiusScale: 2.0, count: 6, sizeRange: [s(2), s(4)] },
-      ],
+    this.buildImageButton(
+      parent, topY,
+      imgStartN, imgStartP,
+      '\u5f00\u542f\u5f81\u7a0b', s(200),
+      'sword', s(20),
+      0xf0ffe0, s(15),
+      () => this.handleStart(),
+      0.45, true,
     );
-    // 光晕中心对齐按钮中心
-    aura.container.x = btnW / 2;
-    aura.container.y = btnH / 2;
-    btnWrapper.addChild(aura.container);
-    this.btnAura = aura;
-
-    // 2) 按钮本体（无 filter）
-    const startBtn = createButton('\u5f00\u542f\u5f81\u7a0b', btnW, btnH, { variant: 'primary', fontSize: s(14) });
-    btnWrapper.addChild(startBtn);
-
-    const swordIcon = getIcon('sword', s(18));
-    this.layoutIconAndTextInButton(startBtn, btnW, btnH, swordIcon, s(6));
-
-    startBtn.on('pointertap', () => this.handleStart());
-
-    btnWrapper.x = (W - btnW) / 2;
-    btnWrapper.y = topY;
-    parent.addChild(btnWrapper);
   }
 
   private createShopButton(parent: Container, topY: number) {
-    const btnW = s(220);
-    const btnH = s(36);
-    const shopBtn = createButton('\u9b42\u6676\u5546\u5e97', btnW, btnH, { variant: 'purple', fontSize: s(14) });
-
-    const crystalIcon = getIcon('soul_crystal', s(18));
-    this.layoutIconAndTextInButton(shopBtn, btnW, btnH, crystalIcon, s(6));
-
-    shopBtn.x = (W - btnW) / 2;
-    shopBtn.y = topY;
-    shopBtn.on('pointertap', () => this.openSoulShop());
-    parent.addChild(shopBtn);
+    this.buildImageButton(
+      parent, topY,
+      imgShopN, imgShopP,
+      '\u9b42\u6676\u5546\u5e97', s(200),
+      'soul_crystal', s(18),
+      0xe0c0ff, s(14),
+      () => this.openSoulShop(),
+    );
   }
 
   private createTutorialButton(parent: Container, topY: number) {

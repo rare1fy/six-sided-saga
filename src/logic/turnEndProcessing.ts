@@ -1,4 +1,4 @@
-/**
+﻿/**
  * turnEndProcessing.ts — 回合结束处理（前半段）
  *
  * 从 DiceHeroGame.tsx endTurn() L2277-L2397 提取。
@@ -7,13 +7,12 @@
  * ARCH-F Round1 模块拆分
  */
 
-import type React from 'react';
-import * as ReactNS from 'react';
+
 import type { Die, GameState, Enemy } from '../types/game';
 import { getDiceDef } from '../data/dice';
 import { buildRelicContext } from '../engine/buildRelicContext';
 import { absorbPlayerDamage, calcMageChantHitPenalty } from './battleHelpers';
-import { PixelArcaneShield, PixelShield, PixelHeart, PixelArcaneSkull, PixelMagic } from '../components/PixelIcons';
+
 import { emitReward } from './rewardEvents';
 import { cleanupBloodChains } from './bloodChainSystem';
 import { decaySoloSeal } from './soloSealSystem';
@@ -23,15 +22,15 @@ import { decayControlStatuses } from './controlSystem';
 const REWARD_COLOR = 'text-amber-200';
 
 /** 浮字用 奥术屏障 icon —— 法师吟唱+过充回合专用 */
-const arcaneShieldIcon = () => ReactNS.createElement(PixelArcaneShield, { size: 1.5 });
+const arcaneShieldIcon = () => 'arcane-shield';
 /** 浮字用 护甲 icon */
-const armorIcon = () => ReactNS.createElement(PixelShield, { size: 1.5 });
+const armorIcon = () => 'shield';
 /** 浮字用 生命 icon */
-const heartIcon = () => ReactNS.createElement(PixelHeart, { size: 1.5 });
+const heartIcon = () => 'heart';
 /** 浮字用 法术反噬 icon —— 紫色骷髅（法师专属不可净化 debuff） */
-const arcaneSkullIcon = () => ReactNS.createElement(PixelArcaneSkull, { size: 1.3 });
+const arcaneSkullIcon = () => 'arcane-skull';
 /** 浮字用 吟唱 icon —— 紫色星界法阵（与 PlayerHudView 的吟唱徽章同源） */
-const magicIcon = () => ReactNS.createElement(PixelMagic, { size: 1.3 });
+const magicIcon = () => 'magic';
 
 // ============================================================
 // Context 接口
@@ -44,13 +43,13 @@ export interface TurnEndContext {
   rerollCount: number;
 
   // Callbacks
-  setGame: React.Dispatch<React.SetStateAction<GameState>>;
-  setEnemies: React.Dispatch<React.SetStateAction<Enemy[]>>;
-  addFloatingText: (text: string, color: string, icon?: React.ReactNode, target?: string, persistent?: boolean) => void;
+  setGame: (v: GameState | ((prev: GameState) => GameState)) => void;
+  setEnemies: (v: Enemy[] | ((prev: Enemy[]) => Enemy[])) => void;
+  addFloatingText: (text: string, color: string, icon?: string, target?: string, persistent?: boolean) => void;
   addToast: (msg: string, type?: string, options?: { icon?: 'gold' | 'dice' | 'relic' | 'remove' | 'check' | 'star' | 'shuffle'; relicId?: string }) => void;
   addLog: (msg: string) => void;
   playSound: (id: string) => void;
-  setScreenShake: React.Dispatch<React.SetStateAction<boolean>>;
+  setScreenShake: (v: boolean | ((prev: boolean) => boolean)) => void;
   buildRelicContext: typeof buildRelicContext;
 }
 

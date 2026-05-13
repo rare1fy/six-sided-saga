@@ -1,4 +1,4 @@
-/**
+﻿/**
  * instakillChallengeAid.ts — 洞察弱点挑战达成后的战斗援助效果
  *
  * 当玩家完成洞察弱点挑战（instakillChallenge）时，随机触发一种援助效果：
@@ -23,16 +23,16 @@
  */
 
 import type { PostPlayContext } from './postPlayEffects';
-import React from 'react';
-import { PixelDice, PixelHeart } from '../components/PixelIcons';
+
+
 import { emitReward } from './rewardEvents';
 
 /** 奖励类飘字统一金色 */
 const REWARD_COLOR = 'text-amber-200';
 
 /** 浮字用的骰子 icon（"获得骰子"类飘字统一入口） */
-const diceIcon = () => React.createElement(PixelDice, { size: 1.5 });
-const heartIcon = () => React.createElement(PixelHeart, { size: 1.3 });
+const diceIcon = () => 'dice';
+const heartIcon = () => 'heart';
 
 /**
  * 检测洞察弱点挑战是否刚完成，若是则随机触发一种战斗援助效果。

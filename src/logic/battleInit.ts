@@ -1,10 +1,10 @@
-/**
+﻿/**
  * battleInit.ts — 战斗初始化纯逻辑
  * 从 useBattleLifecycle.ts 拆分 (ARCH-J)
  *
  * 职责：构建战斗初始状态、骰子翻滚动画
  */
-import React from 'react';
+
 import type { Die, MapNode, Enemy, GameState } from '../types/game';
 import { getDiceDef, rollDiceDef } from '../data/dice';
 import { initDiceBag } from '../data/diceBag';
@@ -85,7 +85,7 @@ const DICE_FRAME_TIMES = [30, 40, 50, 60, 80, 100, 120, 150];
 const DICE_SOUND_FRAME = 3;
 
 export interface DiceRollAnimationCallbacks {
-  setDice: React.Dispatch<React.SetStateAction<Die[]>>;
+  setDice: (v: Die[] | ((prev: Die[]) => Die[])) => void;
   setGame: (updater: GameState | ((prev: GameState) => GameState)) => void;
   addLog: (msg: string) => void;
 }

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * drawPhase.ts — 回合结束抽牌阶段
  *
  * 从 DiceHeroGame.tsx endTurn() L2429-L2654 提取。
@@ -8,22 +8,21 @@
  * ARCH-F Round1 模块拆分
  */
 
-import type React from 'react';
 import { calcActualDrawCount, getAutoDiscardOrder } from './runeSystem';
-import * as ReactNS from 'react';
+
 import type { Die, GameState } from '../types/game';
 import { getDiceDef, rollDiceDef } from '../data/dice';
 import { drawFromBag } from '../data/diceBag';
 import { applyDiceSpecialEffects } from './diceEffects';
 import { hasRelic, hasLimitBreaker } from '../engine/relicQueries';
-import { PixelCards, PixelBloodthirst } from '../components/PixelIcons';
+
 import { emitReward } from './rewardEvents';
 import { consumeReapSlotsForDraw } from './warriorReap';
 
 /** 浮字用 牌 icon */
-const cardsIcon = () => ReactNS.createElement(PixelCards, { size: 1.5 });
+const cardsIcon = () => 'cards';
 /** 浮字用 噬血 icon（战场收割专用） */
-const bloodthirstIcon = () => ReactNS.createElement(PixelBloodthirst, { size: 1.5 });
+const bloodthirstIcon = () => 'bloodthirst';
 
 /** 统一奖励类飘字颜色 */
 const REWARD_COLOR = 'text-amber-200';
@@ -33,17 +32,17 @@ const REWARD_COLOR = 'text-amber-200';
 // ============================================================
 
 export interface DrawPhaseContext {
-  gameRef: React.MutableRefObject<GameState>;
+  gameRef: { current: GameState };
   game: GameState;
   dice: Die[];
 
   // Callbacks
-  setGame: React.Dispatch<React.SetStateAction<GameState>>;
-  setDice: React.Dispatch<React.SetStateAction<Die[]>>;
-  setRerollCount: React.Dispatch<React.SetStateAction<number>>;
-  setShuffleAnimating: React.Dispatch<React.SetStateAction<boolean>>;
-  setDiceDrawAnim: React.Dispatch<React.SetStateAction<boolean>>;
-  addFloatingText: (text: string, color: string, icon?: React.ReactNode, target?: string, persistent?: boolean) => void;
+  setGame: (v: GameState | ((prev: GameState) => GameState)) => void;
+  setDice: (v: Die[] | ((prev: Die[]) => Die[])) => void;
+  setRerollCount: (v: number | ((prev: number) => number)) => void;
+  setShuffleAnimating: (v: boolean | ((prev: boolean) => boolean)) => void;
+  setDiceDrawAnim: (v: boolean | ((prev: boolean) => boolean)) => void;
+  addFloatingText: (text: string, color: string, icon?: string, target?: string, persistent?: boolean) => void;
   addToast: (msg: string, type?: string, options?: { icon?: 'gold' | 'dice' | 'relic' | 'remove' | 'check' | 'star' | 'shuffle'; relicId?: string }) => void;
   playSound: (id: string) => void;
 }

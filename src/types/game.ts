@@ -2,7 +2,6 @@
 // types/game.ts — 统一重导出入口 + 本地类型
 // ============================================================
 
-import React from 'react';
 import type { OwnedDie, HandType, StatusEffect } from './dice';
 import type { MapNode, BattleWave, ShopItem, MerchantItem, LootItem, InstakillChallenge } from './entities';
 import type { Relic } from './relics';
@@ -231,7 +230,7 @@ export interface HandTypeDef {
   name: string;
   /** UI 显示名（西幻包装版，玩家看到的名字）。缺省回退到 name */
   displayName?: string;
-  icon: React.ReactNode;
+  icon: string;
   base: number;
   mult: number;
   description: string;
