@@ -332,7 +332,7 @@ export type HandType = '普通攻击' | '对子' | '连对' | '三连对' | '三
 // 状态效果
 // ============================================================
 
-export type StatusType = 'poison' | 'burn' | 'dodge' | 'vulnerable' | 'strength' | 'weak' | 'armor' | 'freeze';
+export type StatusType = 'poison' | 'burn' | 'dodge' | 'vulnerable' | 'strength' | 'weak' | 'armor' | 'freeze' | 'stun' | 'silence';
 
 export interface StatusEffect {
   type: StatusType;

@@ -189,6 +189,17 @@ export interface RelicEffect {
   poisonMultiplier?: number;       // 毒层倍率
   preserveShadowDice?: boolean;    // 保留暗影残骰
   poisonAllEnemies?: number;       // 全体施毒层数
+  // v0.5 遗物效果消费字段（触发点读取）
+  tempRerollBonus?: number;        // 回合开始额外重投次数
+  freeRerollOnBlood?: boolean;     // 卖血重投免费（不扣HP）
+  bonusDamageOnSameElement?: number; // 同元素骰子额外伤害
+  bonusDamageOnHighPoint?: number; // 高点数(>=5)骰子额外伤害
+  healOnKill?: number;             // 击杀回血
+  goldOnKill?: number;             // 击杀加金
+  extraDrawOnCombo?: number;       // 连击时额外抽牌
+  bonusDamagePerUniqueType?: number; // 每种不同骰子类型加伤
+  shieldOnTurnStart?: number;      // 回合开始获得屏障
+  poisonOnTurnStart?: number;      // 回合开始对敌叠毒
 }
 
 // ============================================================

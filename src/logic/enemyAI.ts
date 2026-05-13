@@ -277,6 +277,17 @@ export async function executeEnemyTurn(
       continue;
     }
 
+    // v0.5: 眩晕状态跳过行动
+    const isStunned = e.statuses.some(s => s.type === 'stun' && s.value > 0);
+    if (isStunned) {
+      cb.addLog(`${e.name} 被眩晕，无法行动！`);
+      cb.addFloatingText('眩晕', 'text-yellow-400', undefined, 'enemy');
+      cb.setEnemyEffectForUid(e.uid, 'shake');
+      await new Promise(r => setTimeout(r, 400));
+      cb.setEnemyEffectForUid(e.uid, null);
+      continue;
+    }
+
     const isMelee = e.combatType === 'warrior' || e.combatType === 'guardian';
 
     if (isMelee && e.distance > 0) {
@@ -570,6 +581,11 @@ export async function executeEnemyTurn(
         hasPlayedThisTurn: latestGame.playsLeft < latestGame.maxPlays,
       });
       const res = relic.effect(ctx);
+      // v0.5: 卖血重投免费
+      if (res.freeRerollOnBlood && ctx.isBloodReroll) {
+        // 标记本次重投不扣HP（由调用方读取）
+        (ctx as any)._freeBloodReroll = true;
+      }
       if (res.damage) { cb.setGame(prev => ({ ...prev, rageFireBonus: (prev.rageFireBonus || 0) + res.damage! })); cb.addToast(`${relic.name}: 下次出牌+${res.damage}伤害`, 'buff'); }
       if (res.tempDrawBonus) { cb.setGame(prev => ({ ...prev, relicTempDrawBonus: (prev.relicTempDrawBonus || 0) + res.tempDrawBonus! })); cb.addToast(`${relic.name}: 下回合+${res.tempDrawBonus}手牌`, 'buff'); }
     }

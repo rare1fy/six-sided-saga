@@ -246,6 +246,24 @@ export function useBattleLifecycle(state: BattleState) {
       if (res.goldBonus) {
         moveGoldBonus += res.goldBonus;
       }
+      // v0.5 on_turn_start 遗物效果
+      if (res.tempRerollBonus && res.tempRerollBonus > 0) {
+        setRerollCount(prev => prev + res.tempRerollBonus!);
+      }
+      if (res.shieldOnTurnStart && res.shieldOnTurnStart > 0) {
+        setGame(prev => ({ ...prev, chantShield: prev.chantShield + res.shieldOnTurnStart! }));
+      }
+      if (res.poisonOnTurnStart && res.poisonOnTurnStart > 0) {
+        const poisonVal = res.poisonOnTurnStart;
+        setEnemies(prev => prev.map(e => {
+          if (e.hp <= 0) return e;
+          const existing = e.statuses.find(s => s.type === 'poison');
+          if (existing) {
+            return { ...e, statuses: e.statuses.map(s => s === existing ? { ...s, value: s.value + poisonVal } : s) };
+          }
+          return { ...e, statuses: [...e.statuses, { type: 'poison' as const, value: poisonVal, duration: 99 }] };
+        }));
+      }
     });
     if (moveGoldBonus > 0) {
       setGame(prev => ({ ...prev, souls: prev.souls + moveGoldBonus, stats: { ...prev.stats, goldEarned: prev.stats.goldEarned + moveGoldBonus } }));

@@ -28,4 +28,6 @@ export const STATUS_INFO: Record<StatusType, {
   weak:       { icon: <PixelArrowDown size={2} />,color: 'text-zinc-400',   colorRgb: 'rgb(161,161,170)', bgColor: 'rgba(161,161,170,0.15)', borderColor: 'rgba(161,161,170,0.5)', label: '虚弱', description: '造成的伤害减少 25%。', kind: 'debuff' },
   armor:      { icon: <PixelShield size={2} />, color: 'text-blue-400',   colorRgb: 'rgb(96,165,250)',  bgColor: 'rgba(96,165,250,0.15)', borderColor: 'rgba(96,165,250,0.5)',  label: '护甲',   description: '抵挡即将到来的伤害。', kind: 'buff' },
   freeze:     { icon: <PixelWind size={2} />,   color: 'text-blue-300',   colorRgb: 'rgb(147,197,253)', bgColor: 'rgba(147,197,253,0.15)', borderColor: 'rgba(147,197,253,0.5)', label: '冻结', description: '完全无法行动。', kind: 'debuff' },
+  stun:       { icon: <PixelWind size={2} />,   color: 'text-yellow-400', colorRgb: 'rgb(250,204,21)',  bgColor: 'rgba(250,204,21,0.15)',  borderColor: 'rgba(250,204,21,0.5)',  label: '眩晕', description: '无法行动，持续 X 回合。', kind: 'debuff' },
+  silence:    { icon: <PixelWind size={2} />,   color: 'text-pink-400',   colorRgb: 'rgb(244,114,182)', bgColor: 'rgba(244,114,182,0.15)', borderColor: 'rgba(244,114,182,0.5)', label: '沉默', description: '无法使用技能，只能普攻。', kind: 'debuff' },
 };

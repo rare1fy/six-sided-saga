@@ -149,6 +149,27 @@ export function calculateExpectedOutcome(params: CalculateExpectedOutcomeParams)
       holyPurify += (typeof res.purifyDebuff === 'number' ? res.purifyDebuff : 1);
       details.push('净化');
     }
+    // v0.5 遗物效果消费
+    if (res.bonusDamageOnSameElement && (relicCtx as any).sameElementCount >= 2) {
+      extraDamage += res.bonusDamageOnSameElement * (relicCtx as any).sameElementCount;
+      details.push(`同元素+${res.bonusDamageOnSameElement * (relicCtx as any).sameElementCount}`);
+    }
+    if (res.bonusDamageOnHighPoint) {
+      const highCount = dice.filter(d => d.value >= 5 && !d.spent).length;
+      if (highCount > 0) {
+        extraDamage += res.bonusDamageOnHighPoint * highCount;
+        details.push(`高点+${res.bonusDamageOnHighPoint * highCount}`);
+      }
+    }
+    if (res.bonusDamagePerUniqueType) {
+      const uniqueTypes = new Set(dice.filter(d => !d.spent).map(d => d.diceDefId)).size;
+      extraDamage += res.bonusDamagePerUniqueType * uniqueTypes;
+      details.push(`多样+${res.bonusDamagePerUniqueType * uniqueTypes}`);
+    }
+    if (res.extraDrawOnCombo && (game.comboCount || 0) > 0) {
+      pendingSideEffects.push({ type: 'setRelicTempDrawBonus', value: res.extraDrawOnCombo });
+      details.push(`连击抽+${res.extraDrawOnCombo}`);
+    }
     // [Bug-11] 魔法手套 tempDrawBonus 只做预览显示，不推入 pendingSideEffects
     if (res.tempDrawBonus && !isExtraHandSlot) {
       pendingSideEffects.push({ type: 'setRelicTempDrawBonus', value: res.tempDrawBonus });

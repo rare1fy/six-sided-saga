@@ -267,6 +267,15 @@ export function executePostPlayEffects(ctx: PostPlayContext): void {
             setRerollCount(prev => Math.max(0, prev - res.grantFreeReroll));
             addToast(`${relic.name}: +${res.grantFreeReroll} 重投`, 'buff');
           }
+          // v0.5 on_kill 遗物效果
+          if (res.healOnKill && res.healOnKill > 0) {
+            setGame(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + res.healOnKill!) }));
+            addToast(`${relic.name}: 击杀回复 +${res.healOnKill}HP`, 'heal');
+          }
+          if (res.goldOnKill && res.goldOnKill > 0) {
+            setGame(prev => ({ ...prev, souls: prev.souls + res.goldOnKill!, stats: { ...prev.stats, goldEarned: prev.stats.goldEarned + res.goldOnKill! } }));
+            addToast(`${relic.name}: 击杀奖励 +${res.goldOnKill}金币`, 'buff');
+          }
         });
       });
 
