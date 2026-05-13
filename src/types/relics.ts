@@ -76,6 +76,21 @@ export interface RelicContext {
   controlType?: string;            // 本次施加的控制类型
   bloodChainActive?: boolean;      // 是否有活跃血锁
   soloSealActive?: boolean;        // 是否处于单挑状态
+  // v0.5 遗物效果需要的额外上下文
+  diceIds?: string[];              // 出牌骰子的 diceDefId 列表
+  uniqueDiceTypes?: number;        // 骰子库中不同种类数
+  hpPercent?: number;              // 当前HP百分比 (0~1)
+  targetHpPercent?: number;        // 目标HP百分比 (0~1)
+  consecutivePlayTurns?: number;   // 连续出牌回合数
+  damageDealt?: number;            // 本次造成的伤害
+  currentArmor?: number;           // 当前护甲值
+  cursedDiceCount?: number;        // 骰子库中诅咒/碎裂骰子数
+  shieldBroken?: number;           // 被击破的屏障值
+  sameElementCount?: number;       // 手牌中同元素骰子最大数量
+  targetPoisonLayers?: number;     // 目标毒层数
+  hasShadowDie?: boolean;          // 手牌中是否有暗影残骰
+  consecutiveCombo?: number;       // 连续连击次数
+  shadowDiceConsumedValue?: number; // 本次消耗的暗影残骰点数总和
 }
 
 export interface RelicEffect {
@@ -118,6 +133,62 @@ export interface RelicEffect {
   shadowDieOnTrigger?: boolean;    // 触发时补残骰
   controlSuccessHeal?: number;     // 控制成功时回复HP
   bloodChainDamageMult?: number;   // 血锁传递伤害倍率
+  // v0.5 遗物效果新增字段
+  tempDrawCountBonus?: number;     // 临时抽牌数加成
+  grantDieWithValue?: number;      // 补一颗指定点数的骰子
+  forceAoe?: boolean;              // 强制AOE
+  allowFullHandPlay?: boolean;     // 允许全手牌出牌
+  maxPlaysPerTurn?: number;        // 每回合最大出牌次数限制
+  echoLastPlay?: boolean;          // 回声：重复上次牌型
+  straightTolerance?: number;      // 顺子容差
+  pairTolerance?: number;          // 对子容差
+  straightFullAoe?: boolean;       // 顺子全额AOE
+  returnPairDice?: boolean;        // 葫芦对子部分回手
+  boostMatchingDice?: number;      // 同点数骰子加成
+  freeRerollOnSix?: boolean;       // 重投到6时免费再投
+  rerollFloor?: number;            // 重投下限偏移
+  guaranteedSix?: boolean;         // 保证重投出6
+  randomDiceToSeven?: boolean;     // 随机骰子变7
+  damageTakenMult?: number;        // 受伤倍率
+  transferOverkill?: boolean;      // 溢出伤害转移
+  reflectDamage?: number;          // 反弹伤害
+  invincibleTurns?: number;        // 无敌回合数
+  elementDamageMult?: number;      // 元素伤害倍率
+  statusDurationBonus?: number;    // 状态持续时间加成
+  purify?: number;                 // 净化层数
+  extraElementTrigger?: boolean;   // 额外元素触发
+  goldMultiplier?: number;         // 金币倍率
+  revealHiddenChests?: boolean;    // 显示隐藏宝箱
+  extraRelicChance?: number;       // 额外遗物概率
+  upgradeDie?: boolean;            // 升级骰子
+  sellDoubleGold?: boolean;        // 卖骰子双倍金币
+  duplicateDie?: boolean;          // 复制骰子
+  filterCommonDice?: boolean;      // 过滤普通骰子
+  overchargeBonusMult?: number;    // 过充额外倍率
+  controlDurationBonus?: number;   // 控制持续时间加成
+  extraRelicOnEliteKill?: boolean; // 精英击杀额外遗物
+  bloodRerollCostHalf?: boolean;   // 搏命代价减半
+  firstBloodRerollFree?: boolean;  // 首次搏命免费
+  scarDecayHalf?: boolean;         // 伤痕衰减减半
+  bloodChainDurationBonus?: number; // 血锁链持续时间加成
+  bloodChainTransferMult?: number; // 血锁链传递倍率
+  bloodRerollFree?: boolean;       // 搏命免费
+  scatterCritChance?: number;      // 散打暴击概率
+  scatterCritMult?: number;        // 散打暴击倍率
+  berserkExtraPlay?: number;       // 狂暴额外出牌
+  berserkEndHpLoss?: number;       // 狂暴结束HP损失
+  allDiceBaseDamageBonus?: number; // 所有骰子基础伤害加成
+  chantKeepLimit?: number;         // 吟唱保留上限
+  chantKeepScaling?: boolean;      // 吟唱保留递增
+  elementRerollOnKeep?: boolean;   // 保留时元素重随机
+  elementEffectDouble?: boolean;   // 元素效果翻倍
+  maxVulnerableLayers?: number;    // 易伤层数上限
+  meteorChantReduction?: number;   // 陨星吟唱减少
+  grantExtraCrystal?: boolean;     // 额外蓄能水晶
+  secondPlayComboBonus?: number;   // 第2次出牌连击加成
+  poisonMultiplier?: number;       // 毒层倍率
+  preserveShadowDice?: boolean;    // 保留暗影残骰
+  poisonAllEnemies?: number;       // 全体施毒层数
 }
 
 // ============================================================

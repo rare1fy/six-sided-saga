@@ -18,6 +18,7 @@ import { getDiceDef } from '../data/dice';
 import { buildRelicContext } from '../engine/buildRelicContext';
 import { FURY_CONFIG, STATUS_EFFECT_MULT } from '../config/gameBalance';
 import { processDiceOnPlayEffects } from './diceOnPlay';
+import { calcOverchargeBonus, isOvercharged } from './overchargeCalc';
 
 // 重新导出类型和副作用执行，保持消费方 import 路径不变
 export type { PendingSideEffect, ExpectedOutcomeResult, CalculateExpectedOutcomeParams } from './expectedOutcomeTypes';
@@ -285,7 +286,9 @@ export function calculateExpectedOutcome(params: CalculateExpectedOutcomeParams)
   const lvlDmgAdd    = game.levelDamageBonus     || 0;
   const lvlMultAdd   = (game.levelDamageMultBonus || 0) + (game.challengeDamageMultBonus || 0);
   const lvlPierceAdd = game.levelPierceBonus     || 0;
-  const finalMultiplier = multiplier * (1 + lvlMultAdd);
+  // v0.5: 过充加成（手牌超过上限时获得伤害加成）
+  const overchargeBonus = calcOverchargeBonus(dice, game.baseHandLimit || 5);
+  const finalMultiplier = multiplier * (1 + lvlMultAdd + overchargeBonus);
   const totalDamage = Math.ceil(baseDamage * finalMultiplier) + extraDamage + lvlDmgAdd + pierceDamage + totalSelfPointBonus + lvlPierceAdd;
 
   // [DEBUG-DMG 2026-05-08] 伤害计算追踪日志（F12 控制台可查）

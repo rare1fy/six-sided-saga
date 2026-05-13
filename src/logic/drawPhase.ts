@@ -9,6 +9,7 @@
  */
 
 import type React from 'react';
+import { calcActualDrawCount, getAutoDiscardOrder } from './runeSystem';
 import * as ReactNS from 'react';
 import type { Die, GameState } from '../types/game';
 import { getDiceDef, rollDiceDef } from '../data/dice';
