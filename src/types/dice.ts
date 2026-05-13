@@ -15,15 +15,59 @@ export type ControlType = 'taunt' | 'stun' | 'knockback' | 'polymorph' | 'blind'
 // 符文骰子效果类型（v0.5 新增）
 // ============================================================
 
-export type HoldEffectTrigger = 'onTurnStart' | 'onPlay' | 'onHit' | 'onCondition';
+export type HoldEffectTrigger =
+  | 'onTurnStart'
+  | 'onPlay'
+  | 'onHit'
+  | 'onCondition'
+  | 'on_self_damage'       // 战士：主动自伤后
+  | 'on_basic_attack'      // 战士：普通攻击后
+  | 'on_enemy_hit'         // 战士：受敌人攻击后
+  | 'on_chant_end'         // 法师：吟唱回合结束时
+  | 'on_turn_start'        // 法师：回合开始时
+  | 'on_control_success'   // 法师：控制成功后
+  | 'on_draw_end'          // 盗贼：抽牌阶段结束后
+  | 'on_play';             // 盗贼：每次出牌后
 
 export interface HoldEffect {
   trigger: HoldEffectTrigger;
-  description: string;
+  description?: string;
+  // 战士符文
+  damageToBloodChainTargets?: number;  // 血祭：对血锁目标造成N点伤害
+  nextScarMult?: number;               // 战意：下次伤痕放大器倍率
+  armorGainPercent?: number;           // 铁壁：受击后获得护甲=伤害×N%
+  // 法师符文
+  boostLowestDie?: number;             // 星界共鸣：给最低点数骰子+N基础伤害
+  collapseMultOverride?: number;       // 元素棱镜：坍缩加成覆盖值
+  healOnSuccess?: number;              // 封印：控制成功后回复NHP
+  // 盗贼符文
+  transformLowestToShadow?: boolean;   // 暗影仪式：自动变形最低点数骰子
+  comboBonusPerPlay?: number;          // 连击印记：每次出牌后连击加成+N%
+  autoPoison?: number;                 // 剧毒之心：每次出牌后自动叠N层毒
 }
 
 export interface CastEffect {
-  description: string;
+  description?: string;
+  // 战士符文
+  consumeAllScar?: boolean;            // 血祭：消耗全部伤痕
+  trueDamagePerScar?: number;          // 血祭：每层伤痕造成N点真实伤害
+  nextBasicAttackPointsDouble?: boolean; // 战意：下次普攻点数翻倍
+  consumeAllArmor?: boolean;           // 铁壁：消耗全部护甲
+  aoeDamagePercentOfArmor?: number;    // 铁壁：AOE伤害=护甲×N%
+  aoeControlType?: string;             // 铁壁：AOE控制类型
+  // 法师符文
+  chantTurnsBonus?: number;            // 星界共鸣：吟唱回合数+N
+  barrierPerChantTurn?: number;        // 星界共鸣：屏障=吟唱回合×N
+  elementDoubleThisTurn?: boolean;     // 元素棱镜：本回合元素效果×2
+  controlType?: string;                // 封印：施加控制类型
+  controlDuration?: number;            // 封印：控制持续回合
+  secondaryControl?: string;           // 封印：第二个控制类型
+  weakenReduction?: number;            // 封印：虚弱减伤比例
+  // 盗贼符文
+  transformAllToShadow?: boolean;      // 暗影仪式：全部变残骰
+  comboMultiplierDouble?: boolean;     // 连击印记：连击加成翻倍
+  detonateAllPoison?: boolean;         // 剧毒之心：引爆100%毒层
+  damagePerPoisonLayer?: number;       // 剧毒之心：每层毒N点基础伤害
 }
 
 
@@ -294,4 +338,23 @@ export interface StatusEffect {
   type: StatusType;
   value: number;
   duration?: number;
+}
+
+// ============================================================
+// 骰子运行时实例（手牌中的骰子，含临时状态）
+// ============================================================
+
+export interface DiceInstance {
+  def: DiceDef;                    // 骰子模板定义
+  currentFace: number;             // 当前面值（roll 后的点数）
+  instanceId: string;              // 唯一实例 ID（区分同模板多颗）
+  // v0.5 盗贼残骰系统
+  originalDiceId?: string;         // 变形残骰记录原骰子 ID（恢复用）
+  preserveNextTurn?: boolean;      // 连击心得：本颗残骰保留到下回合
+  // v0.5 法师吟唱系统
+  baseDamageBonus?: number;        // 星界共鸣持有效果累加的基础伤害
+  keepBonusAccumulated?: number;   // 星辰骰子吟唱累加的点数
+  // v0.5 通用
+  lockedThisTurn?: boolean;        // 赌徒信条：重投失败后锁定
+  usedThisTurn?: boolean;          // 飞刀/回旋刃：本回合已使用
 }

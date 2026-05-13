@@ -395,6 +395,101 @@ export function getClassDiceRegistry(classId: ClassId): Record<string, DiceDef> 
 }
 
 /** 获取指定职业按稀有度分组的骰子 */
+// ============================================================
+// 符文骰子（9 颗 · 每职业 3 颗 · v0.5 新增）
+// ============================================================
+// 符文骰子无面值，不参与牌型组合，不造成点数伤害。
+// 有两种效果：持有效果（在手牌中时自动生效）+ 打出效果（消耗出牌次数打出时触发）。
+
+const WARRIOR_RUNE_DICE: DiceDef[] = [
+  {
+    id: 'rune_blood_pact', name: '血祭符文', element: 'normal', faces: [], rarity: 'rune',
+    route: 'A', isRune: true,
+    description: '持有：每次主动自伤后对血锁目标造成3点基础伤害。打出：消耗100%伤痕，真实伤害=层数×3。',
+    holdEffect: { trigger: 'on_self_damage', damageToBloodChainTargets: 3 },
+    castEffect: { consumeAllScar: true, trueDamagePerScar: 3 },
+  },
+  {
+    id: 'rune_war_spirit', name: '战意符文', element: 'normal', faces: [], rarity: 'rune',
+    route: 'B', isRune: true,
+    description: '持有：普通攻击后下次伤痕放大器×1.5。打出：下次普通攻击点数翻倍。',
+    holdEffect: { trigger: 'on_basic_attack', nextScarMult: 1.5 },
+    castEffect: { nextBasicAttackPointsDouble: true },
+  },
+  {
+    id: 'rune_iron_bastion', name: '铁壁符文', element: 'normal', faces: [], rarity: 'rune',
+    route: 'C', isRune: true,
+    description: '持有：受敌人攻击后获得护甲=伤害20%。打出：消耗全部护甲，AOE伤害=护甲80%+嘲讽全体。',
+    holdEffect: { trigger: 'on_enemy_hit', armorGainPercent: 0.2 },
+    castEffect: { consumeAllArmor: true, aoeDamagePercentOfArmor: 0.8, aoeControlType: 'taunt' },
+  },
+];
+
+const MAGE_RUNE_DICE: DiceDef[] = [
+  {
+    id: 'rune_astral_echo', name: '星界共鸣', element: 'normal', faces: [], rarity: 'rune',
+    route: 'A', isRune: true,
+    description: '持有：吟唱回合结束时给手牌最低点数骰子+4基础伤害。打出：吟唱回合数+2，获得屏障=吟唱回合×5。',
+    holdEffect: { trigger: 'on_chant_end', boostLowestDie: 4 },
+    castEffect: { chantTurnsBonus: 2, barrierPerChantTurn: 5 },
+  },
+  {
+    id: 'rune_elem_prism', name: '元素棱镜', element: 'normal', faces: [], rarity: 'rune',
+    route: 'B', isRune: true,
+    description: '持有：元素坍缩加成从×1.5提升至×2.0。打出：本回合所有元素骰子效果执行2次。',
+    holdEffect: { trigger: 'on_turn_start', collapseMultOverride: 2.0 },
+    castEffect: { elementDoubleThisTurn: true },
+  },
+  {
+    id: 'rune_seal', name: '封印符文', element: 'normal', faces: [], rarity: 'rune',
+    route: 'C', isRune: true,
+    description: '持有：控制成功后回复4HP。打出：对主目标施加定身1回合+虚弱1回合（伤害-30%）。',
+    holdEffect: { trigger: 'on_control_success', healOnSuccess: 4 },
+    castEffect: { controlType: 'root', controlDuration: 1, secondaryControl: 'weaken', weakenReduction: 0.3 },
+  },
+];
+
+const ROGUE_RUNE_DICE: DiceDef[] = [
+  {
+    id: 'rune_shadow_ritual', name: '暗影仪式', element: 'normal', faces: [], rarity: 'rune',
+    route: 'C', isRune: true,
+    description: '持有：抽牌后自动将手牌中点数最低的非残骰变为暗影残骰。打出：手牌中所有剩余骰子全变残骰。',
+    holdEffect: { trigger: 'on_draw_end', transformLowestToShadow: true },
+    castEffect: { transformAllToShadow: true },
+  },
+  {
+    id: 'rune_combo_mark', name: '连击印记', element: 'normal', faces: [], rarity: 'rune',
+    route: 'A', isRune: true,
+    description: '持有：每次出牌后下次连击加成额外+15%。打出：本回合剩余出牌连击加成翻倍。',
+    holdEffect: { trigger: 'on_play', comboBonusPerPlay: 0.15 },
+    castEffect: { comboMultiplierDouble: true },
+  },
+  {
+    id: 'rune_venom_heart', name: '剧毒之心', element: 'normal', faces: [], rarity: 'rune',
+    route: 'B', isRune: true,
+    description: '持有：每次出牌后自动对目标施加2层毒。打出：引爆目标100%毒层，每层3点基础伤害。',
+    holdEffect: { trigger: 'on_play', autoPoison: 2 },
+    castEffect: { detonateAllPoison: true, damagePerPoisonLayer: 3 },
+  },
+];
+
+/** 全部符文骰子 */
+export const ALL_RUNE_DICE: DiceDef[] = [
+  ...WARRIOR_RUNE_DICE,
+  ...MAGE_RUNE_DICE,
+  ...ROGUE_RUNE_DICE,
+];
+
+/** 按职业获取符文骰子 */
+export function getRuneDiceForClass(classId: string): DiceDef[] {
+  switch (classId) {
+    case 'warrior': return WARRIOR_RUNE_DICE;
+    case 'mage': return MAGE_RUNE_DICE;
+    case 'rogue': return ROGUE_RUNE_DICE;
+    default: return [];
+  }
+}
+
 export function getClassDiceByRarity(classId: ClassId) {
   const pool = CLASS_DICE[classId];
   return {

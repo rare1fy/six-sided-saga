@@ -97,6 +97,12 @@ export interface GameState {
   lastTurnWasHit?: boolean;        // 上回合是否被敌人打掉血（战吼/旋风斩用）
   titanfistUseCount?: number;      // 泰坦之拳本场使用次数
   lifeFurnaceNextPlayBonus?: number; // 生命熔炉满血增伤标记
+  shadowCorruptUsed?: boolean;       // 暗影侵蚀已使用（每场限1次）
+  comboBonus?: number;               // 连击印记持有效果累加值
+  comboMultiplier?: number;          // 连击印记打出效果倍率
+  elementDoubleThisTurn?: boolean;   // 元素棱镜打出效果
+  nextBasicAttackPointsDouble?: boolean; // 战意符文打出效果
+  nextBasicAttackScarMult?: number;  // 战意符文持有效果
   lockedElement?: string;  // 棱镜聚焦锁定的元素         // 盗贼本回合已出牌次数（连击计数）
   lastPlayHandType?: string;   // 盗贼上一次出牌的牌型（连击终结判定）
 

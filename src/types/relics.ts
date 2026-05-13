@@ -19,6 +19,9 @@ export type RelicTrigger =
   | 'on_chant_end'    // 吟唱回合结束时（法师专属遗物）
   | 'on_control_success' // 控制成功时
   | 'on_overcharge'   // 过充状态时出牌
+  | 'on_discard'      // 弃牌阶段时
+  | 'on_hit'          // 受到攻击时（含反弹）
+  | 'on_shop'         // 商店交互时
   | 'passive';        // 被动持续生效
 
 export type RelicRarity = 'common' | 'uncommon' | 'rare' | 'legendary';
