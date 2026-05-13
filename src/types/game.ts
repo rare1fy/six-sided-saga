@@ -95,6 +95,8 @@ export interface GameState {
   berserkTurnsLeft?: number;       // 狂暴剩余回合
   lastTurnHitCount?: number;       // 上回合被敌人攻击次数（怒火/旋风斩用）
   lastTurnWasHit?: boolean;        // 上回合是否被敌人打掉血（战吼/旋风斩用）
+  scarStacks?: number;               // 伤痕层数（战士自伤时+1，每回合-1）
+  bloodChainTarget?: string | null;   // 血锁链目标 enemy uid
   selfDamageThisTurn?: number;      // 本回合累计自伤量（血神之眼用）
   hitsTakenLastTurn?: number;       // 上回合被敌人攻击次数（怒火用）
   titanfistUseCount?: number;      // 泰坦之拳本场使用次数

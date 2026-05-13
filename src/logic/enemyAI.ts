@@ -133,7 +133,7 @@ export async function executeEnemyTurn(
   cb: EnemyAICallbacks
 ): Promise<EnemyTurnResult> {
   // 0. 标记进入敌人回合
-  cb.setGame(prev => ({ ...prev, isEnemyTurn: true, bloodRerollCount: 0, comboCount: 0, lastPlayHandType: undefined, blackMarketUsedThisTurn: false }));
+  cb.setGame(prev => ({ ...prev, isEnemyTurn: true, bloodRerollCount: 0, comboCount: 0, lastPlayHandType: undefined, blackMarketUsedThisTurn: false, hitsTakenLastTurn: 0 }));
 
   // [PRIEST_TRAIT 2026-05-09] 圣怒：每 2 回合自动 +1（在敌人回合最开始统一累加）
   cb.setEnemies(prev => prev.map(en => bumpHolyWrathPerTurn(en, game.battleTurn)));
@@ -553,7 +553,7 @@ export async function executeEnemyTurn(
         }
       }
       mainCounted = true;
-      return { ...prev, hp: newHp, armor: absorb.newArmor, chantShield: absorb.newShield, mageChantHitCount: newHitCount, arcaneBackfire: newBackfire, hpLostThisTurn: (prev.hpLostThisTurn || 0) + hpLost, hpLostThisBattle: (prev.hpLostThisBattle || 0) + hpLost, ...blockUpd };
+      return { ...prev, hp: newHp, armor: absorb.newArmor, chantShield: absorb.newShield, mageChantHitCount: newHitCount, arcaneBackfire: newBackfire, hpLostThisTurn: (prev.hpLostThisTurn || 0) + hpLost, hpLostThisBattle: (prev.hpLostThisBattle || 0) + hpLost, hitsTakenLastTurn: (prev.hitsTakenLastTurn || 0) + (absorb.hpDamage > 0 ? 1 : 0), ...blockUpd };
     });
     if (chantPenaltyMain > 0) cb.addFloatingText(`法术反噬: +${chantPenaltyMain}`, 'text-fuchsia-400', arcaneSkullIcon(), 'player');
 

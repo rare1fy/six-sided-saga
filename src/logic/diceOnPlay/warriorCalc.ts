@@ -53,7 +53,7 @@ export function applyWarriorCalc(
     let mult = op.armorMultFromTotalPoints;
     // v0.5: 伤痕层数达标时护甲倍率提升（w_giantshield）
     if (op.armorMultBoosted && op.scarThresholdForBoost) {
-      const scarStacks = (game as any).scarStacks || 0;
+      const scarStacks = game.scarStacks || 0;
       if (scarStacks >= op.scarThresholdForBoost) mult = op.armorMultBoosted;
     }
     out.extraArmor += Math.ceil(total * mult);
@@ -64,12 +64,12 @@ export function applyWarriorCalc(
   // --- 伤痕系统 ---
   // v0.5: 每层伤痕追加伤害（w_armorbreak）
   if (op.scarBonusDamagePerLayer) {
-    const scarStacks = (game as any).scarStacks || 0;
+    const scarStacks = game.scarStacks || 0;
     out.extraDamage += scarStacks * op.scarBonusDamagePerLayer;
   }
   // v0.5: 消耗伤痕百分比（w_bloodblade / w_bloodgod）
   if (op.consumeScarPercent) {
-    const scarStacks = (game as any).scarStacks || 0;
+    const scarStacks = game.scarStacks || 0;
     const consumed = Math.floor(scarStacks * op.consumeScarPercent);
     // 永久面值加成（w_bloodblade）
     if (op.permanentFaceBonus && consumed >= 1) {
@@ -143,8 +143,8 @@ export function applyWarriorCalc(
         let healPct = op.executeHealPercent;
         // 伤痕>=5 或 血锁状态 → 回血翻倍
         if (op.executeHealPercentBoosted) {
-          const scarStacks = (game as any).scarStacks || 0;
-          const hasBloodChain = (game as any).bloodChainTarget != null;
+          const scarStacks = game.scarStacks || 0;
+          const hasBloodChain = game.bloodChainTarget != null;
           if (scarStacks >= 5 || hasBloodChain) healPct = op.executeHealPercentBoosted;
         }
         out.extraHeal += Math.ceil(game.maxHp * healPct);
@@ -211,14 +211,14 @@ export function applyWarriorCalc(
   // --- 血神之眼（w_bloodgod） ---
   if (op.scaleWithSelfDamage) {
     // 本回合每损失maxHP的1%，伤害+N%
-    const selfDmgPct = ((game as any).selfDamageThisTurn || 0) / game.maxHp * 100;
+    const selfDmgPct = (game.selfDamageThisTurn || 0) / game.maxHp * 100;
     const multPer1Pct = op.selfDamageMultPer1Pct || 0.15;
     const selfDmgMult = Math.min(selfDmgPct * multPer1Pct, op.selfDamageMultCap || 1.2);
     let totalMult = selfDmgMult;
     // 伤痕/单挑额外加成
     if (op.scarOrSoloBonus) {
-      const scarStacks = (game as any).scarStacks || 0;
-      const inSolo = (game as any).soloSealTarget != null;
+      const scarStacks = game.scarStacks || 0;
+      const inSolo = game.soloSealTarget != null;
       if (scarStacks > 0 || inSolo) totalMult += op.scarOrSoloBonus;
     }
     // 总封顶
@@ -228,7 +228,7 @@ export function applyWarriorCalc(
 
   // --- 泰坦之拳（w_titanfist） ---
   if (op.trueDamage) {
-    const useCount = (game as any).titanfistUseCount || 0;
+    const useCount = game.titanfistUseCount || 0;
     if (useCount >= 1 && op.repeatTrueDamage !== undefined) {
       out.trueDamage += op.repeatTrueDamage;
       out.selfDamage += Math.max(1, Math.ceil(game.maxHp * (op.repeatSelfDamagePercent || 0.15)));

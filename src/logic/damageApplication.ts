@@ -610,6 +610,8 @@ export function applyDamageToEnemies(ctx: DamageAppContext): {
     if (totalSelfDmg > 0) {
       newHp = Math.max(1, newHp - totalSelfDmg); // 自伤不会杀死玩家
     }
+    // v0.5: 战士自伤时累加伤痕层数（每次自伤+1层）
+    const scarGain = (prev.playerClass === 'warrior' && totalSelfDmg > 0) ? 1 : 0;
     // 回血
     if (outcome.heal > 0) {
       newHp = Math.min(prev.maxHp, newHp + outcome.heal);
@@ -624,6 +626,8 @@ export function applyDamageToEnemies(ctx: DamageAppContext): {
       selfDamageThisTurn: (prev.selfDamageThisTurn || 0) + totalSelfDmg,
       // 记录被打次数（供下回合 multPerHitTaken 使用）
       hitsTakenLastTurn: prev.hitsTakenLastTurn || 0,
+      // v0.5: 伤痕层数累加
+      scarStacks: (prev.scarStacks || 0) + scarGain,
     };
   });
 
