@@ -1,4 +1,4 @@
-﻿/**
+/**
  * GameApp — 纯 PixiJS 游戏主控制器
  * 
  * 不依赖 React/DOM，可运行在微信小游戏 Canvas 环境
@@ -18,6 +18,7 @@ import { SceneManager } from './SceneManager';
 import { StartScene } from './scenes/StartScene';
 import { TweenManager } from './animation/Tween';
 import { initAssetProvider } from './AssetProvider';
+import { initDebugGUI, setDebugOnChange } from './debug/DebugGUI';
 
 export class GameApp {
   app: PIXI.Application;
@@ -89,20 +90,38 @@ export class GameApp {
 
     // 从开始界面进入
     this.sceneManager.switchTo('start');
+
+    // Debug GUI — 开发阶段实时调参（发布时删除此行）
+    initDebugGUI(() => {
+      // 参数变化时重建当前场景
+      this.sceneManager.rebuildCurrentScene();
+    });
   }
 
   resize() {
     if (typeof window === 'undefined') return;
     const w = window.innerWidth;
     const h = window.innerHeight;
-    // 限制最大渲染宽度为 720（设计宽度），超过不再放大
-    const renderW = Math.min(w, 720);
-    const scale = renderW / 720;
+
+    // 设计分辨率 720x1280（竖屏），按 contain 模式适配窗口
+    const designW = 720;
+    const designH = 1280;
+    const scaleX = w / designW;
+    const scaleY = h / designH;
+    const scale = Math.min(scaleX, scaleY);
+
+    // renderer 尺寸 = 窗口尺寸
     this.app.renderer.resize(w, h);
+
+    // stage 缩放到适配比例
     this.app.stage.scale.set(scale);
-    // 超宽时居中
-    this.app.stage.x = (w - renderW) / 2;
-    this.designH = h / scale;
+
+    // 居中（letterbox）
+    this.app.stage.x = (w - designW * scale) / 2;
+    this.app.stage.y = (h - designH * scale) / 2;
+
+    // 更新设计高度（保持 720 宽度下的逻辑高度）
+    this.designH = designH;
   }
 
   /** 供场景调用：切换游戏阶段 */

@@ -7,7 +7,7 @@ import { Container } from 'pixi.js';
 import { Graphics } from 'pixi.js';
 import type { GameScene } from '../SceneManager';
 import type { GameApp } from '../GameApp';
-import { createText, createPanel, createButton, COLORS, S } from '../UIFactory';
+import { createText, createPanel, createButton, COLORS} from '../UIFactory';
 import { GlobalTopBar, type TopBarData } from '../ui/GlobalTopBar';
 import { SettingsPanel } from '../ui/SettingsPanel';
 import { TweenManager, Ease } from '../animation/Tween';

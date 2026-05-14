@@ -6,7 +6,7 @@ import { Container } from 'pixi.js';
 import { Graphics } from 'pixi.js';
 import type { GameScene } from '../SceneManager';
 import type { GameApp } from '../GameApp';
-import { createText, createButton, COLORS, S } from '../UIFactory';
+import { createText, createButton, COLORS} from '../UIFactory';
 import { TweenManager, Ease } from '../animation/Tween';
 import { playSfx } from '../SoundBridge';
 

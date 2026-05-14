@@ -1,12 +1,12 @@
 ﻿/**
- * ShopScene — 商店界面 (PixiJS)
+ * 1hopScene — 商店界面 (PixiJS)
  * 接入 src/logic/shopGenerator 动态生成商品
  */
 import { Container } from 'pixi.js';
 import { Graphics } from 'pixi.js';
 import type { GameScene } from '../SceneManager';
 import type { GameApp } from '../GameApp';
-import { createText, createButton, createPanel, COLORS, S } from '../UIFactory';
+import { createText, createButton, createPanel, COLORS} from '../UIFactory';
 import { generateShopItems } from '../../logic/shopGenerator';
 import type { ShopItem } from '../../types/game';
 import { TweenManager, Ease } from '../animation/Tween';

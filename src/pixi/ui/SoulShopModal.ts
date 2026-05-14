@@ -1,5 +1,5 @@
 /**
- * SoulShopModal.ts - 魂晶商店
+ * 1oulShopModal.ts - 魂晶商店
  *
  * Design philosophy (from loaded skills):
  * - Game UI: "If players notice the UI, something is wrong"
@@ -14,17 +14,17 @@
  */
 import { Container, Text } from 'pixi.js';
 import { Graphics } from 'pixi.js';
-import { createText, COLORS, S } from '../UIFactory';
+import { createText, COLORS} from '../UIFactory';
 import { getRelicIcon, getIcon } from '../AssetProvider';
 import { ALL_RELICS } from '../../data/relics';
 import { TweenManager, Ease } from '../animation/Tween';
 import type { GameApp } from '../GameApp';
 
 const W = 720;
-const s = (v: number) => Math.round(v * S);
+const s = (v: number) => Math.round(v * 1);
 
 // Pixel grid unit — all spacing is multiples of this
-const G = s(4);
+const G = s(6);
 
 // Palette (constrained, from pixel-art-game-builder philosophy)
 const P = {
@@ -117,7 +117,7 @@ export class SoulShopModal {
     const H = this.gameApp.designH;
     // Panel: inset from edges, vertically centered
     const pw = W - G * 8;     // ~688px wide, 16px margin each side
-    const ph = Math.min(Math.round(H * 0.86), s(480));
+    const ph = Math.min(Math.round(H * 0.86), s(771));
     const px = (W - pw) / 2;
     const py = (H - ph) / 2;
 
@@ -156,7 +156,7 @@ export class SoulShopModal {
     tIcon.y = (tbH - tIcon.height) / 2;
     this.panel.addChild(tIcon);
 
-    const title = createText('魂晶商店', { size: s(13), color: P.textMain, bold: true });
+    const title = createText('魂晶商店', { size: s(21), color: P.textMain, bold: true });
     title.x = tIcon.x + tIcon.width + G * 2;
     title.y = (tbH - title.height) / 2;
     this.panel.addChild(title);
@@ -164,7 +164,7 @@ export class SoulShopModal {
     // Balance (right of title)
     const balIcon = getIcon('soul_crystal', G * 3);
     this.balanceText = createText(`${this.meta.permanentQuota}`, {
-      size: s(11), color: P.accent, bold: true,
+      size: s(18), color: P.accent, bold: true,
     });
     // Position from right edge
     const closeSize = G * 4;
@@ -200,7 +200,7 @@ export class SoulShopModal {
     const descY = tbH + G * 2;
     const desc = createText(
       '消耗魂晶购买常驻遗物，购买后每次开局自动携带。魂晶通过溢出伤害获取，营火可撤离保存。',
-      { size: s(7), color: P.textDim, maxWidth: pw - G * 6 },
+      { size: s(11), color: P.textDim, maxWidth: pw - G * 6 },
     );
     desc.x = G * 3;
     desc.y = descY;
@@ -218,16 +218,16 @@ export class SoulShopModal {
     this.scrollContainer.mask = clipMask;
     this.panel.addChild(this.scrollContainer);
 
-    const rowW = pw - s(8);  // 左右各留 s(4)
-    const rowH = s(52);     // 原版 p-3 = 12*2=24px内容+28px图标 ≈ 52px
-    const rowGap = s(8);    // 原版 gap-2 = 8px
+    const rowW = pw - s(13);  // 左右各留 s(6)
+    const rowH = s(84);     // 原版 p-3 = 12*2=24px内容+28px图标 ≈ 52px
+    const rowGap = s(13);    // 原版 gap-2 = 8px
 
     let cy = this.listTop;
     for (const item of SHOP_ITEMS) {
       const relic = ALL_RELICS[item.relicId];
       if (!relic) continue;
       const row = this.createRow(item, relic, rowW, rowH);
-      row.x = s(4);
+      row.x = s(6);
       row.y = cy;
       this.scrollContainer.addChild(row);
       cy += rowH + rowGap;
@@ -236,14 +236,14 @@ export class SoulShopModal {
 
     this.panel.on('wheel', (e: any) => {
       this.scrollY = Math.min(this.maxScrollY, Math.max(0,
-        this.scrollY + (e.deltaY > 0 ? s(32) : -s(32))));
+        this.scrollY + (e.deltaY > 0 ? s(51) : -s(51))));
       this.scrollContainer.y = -this.scrollY;
     });
 
     // ── Footer stats ──
     this.statsText = createText(
       `总局数: ${this.meta.totalRuns}    最高溢出: ${this.meta.highestOverkill}    已解锁: ${this.meta.unlockedStartRelics.length}/${SHOP_ITEMS.length}`,
-      { size: s(7), color: P.textDim },
+      { size: s(11), color: P.textDim },
     );
     this.statsText.x = G * 3;
     this.statsText.y = ph - G * 5;
@@ -263,7 +263,7 @@ export class SoulShopModal {
     const row = new Container();
     const owned = this.meta.unlockedStartRelics.includes(item.relicId);
     const canAfford = this.meta.permanentQuota >= item.cost;
-    const pad = s(12); // 原版 p-3 = 12px
+    const pad = s(19); // 原版 p-3 = 12px
 
     // 背景 + 边框
     const bg = new Graphics();
@@ -272,26 +272,26 @@ export class SoulShopModal {
     bg.beginFill(bgColor, owned ? 0.3 : 0.8);
     bg.drawRect(0, 0, w, h);
     bg.endFill();
-    bg.lineStyle(s(2), borderColor, owned ? 0.3 : 0.5);
+    bg.lineStyle(s(3), borderColor, owned ? 0.3 : 0.5);
     bg.drawRect(0, 0, w, h);
     bg.lineStyle(0);
     row.addChild(bg);
 
     // 图标 — 原版 w-8 = 32px，垂直居中
-    const iconSize = s(28);
+    const iconSize = s(45);
     const icon = getRelicIcon(item.relicId, iconSize);
     icon.x = pad;
     icon.y = (h - iconSize) / 2;
     row.addChild(icon);
 
     // 文字区域起始 X — 图标右侧 + gap-3 (12px)
-    const tx = pad + iconSize + s(12);
+    const tx = pad + iconSize + s(19);
     const tw = w - tx - pad;
 
     // 名称 — 原版 text-xs(12px) font-bold，垂直位于行上部
     const nameColor = owned ? P.green : P.textMain;
     const name = createText(relic.name, {
-      size: s(12), color: nameColor, bold: true,
+      size: s(19), color: nameColor, bold: true,
     });
     name.x = tx;
     name.y = pad;
@@ -299,29 +299,29 @@ export class SoulShopModal {
 
     // 已解锁标签 / 价格 — 与名称同行，右对齐
     if (owned) {
-      const tag = createText('已解锁', { size: s(8), color: P.green, bold: true });
+      const tag = createText('已解锁', { size: s(13), color: P.green, bold: true });
       tag.x = w - tag.width - pad;
-      tag.y = pad + s(2);
+      tag.y = pad + s(3);
       row.addChild(tag);
     } else {
       const priceColor = canAfford ? P.accent : P.red;
       const priceText = createText(`${item.cost}`, {
-        size: s(12), color: priceColor, bold: true,
+        size: s(19), color: priceColor, bold: true,
       });
-      const cryIcon = getIcon('soul_crystal', s(10));
+      const cryIcon = getIcon('soul_crystal', s(16));
       priceText.x = w - priceText.width - pad;
       priceText.y = pad;
-      cryIcon.x = priceText.x - cryIcon.width - s(4);
-      cryIcon.y = pad + s(2);
+      cryIcon.x = priceText.x - cryIcon.width - s(6);
+      cryIcon.y = pad + s(3);
       row.addChild(cryIcon);
       row.addChild(priceText);
     }
 
     // 描述 — 原版 text-[9px] mt-0.5(2px) leading-relaxed
-    const descY = pad + name.height + s(2);
+    const descY = pad + name.height + s(3);
     const descStr = relic.description.replace(/<[^>]*>/g, '');
     const desc = createText(descStr, {
-      size: s(9), color: P.textSub, maxWidth: tw,
+      size: s(14), color: P.textSub, maxWidth: tw,
     });
     desc.x = tx;
     desc.y = descY;
@@ -338,7 +338,7 @@ export class SoulShopModal {
         bg.beginFill(canAfford ? 0x1a1430 : 0x201018, 0.95);
         bg.drawRect(0, 0, w, h);
         bg.endFill();
-        bg.lineStyle(s(2), canAfford ? P.borderHi : P.red, 0.7);
+        bg.lineStyle(s(3), canAfford ? P.borderHi : P.red, 0.7);
         bg.drawRect(0, 0, w, h);
         bg.lineStyle(0);
       });
@@ -347,7 +347,7 @@ export class SoulShopModal {
         bg.beginFill(P.bgRow, 0.8);
         bg.drawRect(0, 0, w, h);
         bg.endFill();
-        bg.lineStyle(s(2), P.border, 0.5);
+        bg.lineStyle(s(3), P.border, 0.5);
         bg.drawRect(0, 0, w, h);
         bg.lineStyle(0);
         bg.beginFill(0xffffff, 0.03);
@@ -392,7 +392,7 @@ export class SoulShopModal {
 
   private showToast(msg: string, color: number) {
     const pw = W - G * 8;
-    const toast = createText(msg, { size: s(11), color, bold: true });
+    const toast = createText(msg, { size: s(18), color, bold: true });
     toast.anchor.set(0.5, 0.5);
     toast.x = pw / 2;
     toast.y = G * 4;

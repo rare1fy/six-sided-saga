@@ -13,7 +13,7 @@
  * 3. Unified RenderTexture cache
  * 4. Type-safe: all APIs return Sprite
  */
-import { Graphics, RenderTexture, Sprite, Texture } from 'pixi.js';
+import { Graphics, RenderTexture, Sprite, Texture, SCALE_MODES } from 'pixi.js';
 import type { Application } from 'pixi.js';
 import * as Icons from '../data/pixelIconData';
 import { RELIC_PIXEL_DATA, DEFAULT_ICON } from '../data/relicPixelData';
@@ -111,16 +111,17 @@ export function getEnemySprite(enemyName: string, pixelSize: number = 4): Sprite
   const imageUrl = ENEMY_IMAGE_MAP[enemyName];
   if (imageUrl) {
     const sp = Sprite.from(imageUrl);
-    const targetSize = pixelSize * 16;
-    // 等比缩放到目标尺寸
-    if (sp.texture.valid) {
+    // 像素风：最近邻插值，放大不模糊
+    sp.texture.baseTexture.scaleMode = SCALE_MODES.NEAREST;
+    const targetSize = pixelSize * 16 * 3; // 放大3倍让怪物清晰可见
+    const applyScale = () => {
       const scale = targetSize / Math.max(sp.texture.width, sp.texture.height);
       sp.scale.set(scale, scale);
+    };
+    if (sp.texture.valid) {
+      applyScale();
     } else {
-      sp.texture.baseTexture.once('loaded', () => {
-        const scale = targetSize / Math.max(sp.texture.width, sp.texture.height);
-        sp.scale.set(scale, scale);
-      });
+      sp.texture.baseTexture.once('loaded', applyScale);
     }
     return sp;
   }

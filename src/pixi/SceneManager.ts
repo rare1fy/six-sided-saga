@@ -1,4 +1,4 @@
-﻿/**
+/**
  * SceneManager — 场景管理器
  * 替代 DiceHeroGame.tsx 的 React 路由逻辑
  */
@@ -113,6 +113,15 @@ export class SceneManager {
     // 注册 tick
     if (scene.onTick) {
       this.gameApp.app.ticker.add(scene.onTick, scene);
+    }
+  }
+
+  /** Debug GUI 调参时重建当前场景 */
+  rebuildCurrentScene() {
+    if (this.currentScene && this.currentName) {
+      // 调用 onExit 清理，再调用 onEnter 重建
+      this.currentScene.onExit();
+      this.currentScene.onEnter(this.gameApp);
     }
   }
 

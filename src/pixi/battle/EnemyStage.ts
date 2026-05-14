@@ -4,7 +4,7 @@
  */
 import { Container, Sprite } from 'pixi.js';
 import { Graphics } from 'pixi.js';
-import { createText, createProgressBar, COLORS, S } from '../UIFactory';
+import { createText, createProgressBar, COLORS} from '../UIFactory';
 import { getEnemySprite } from '../AssetProvider';
 // ENEMY_SPRITES now accessed via AssetProvider
 import type { GameApp } from '../GameApp';
@@ -12,7 +12,7 @@ import type { Enemy } from '../../types/game';
 import type { BattleGameState } from './types';
 
 const W = 720;
-const s = (v: number) => Math.round(v * S);
+const s = (v: number) => Math.round(v * 1);
 
 function getStageH(gameApp?: GameApp): number {
   const H = gameApp?.designH || 1280;
@@ -156,24 +156,24 @@ export function buildEnemyStage(gameApp: GameApp, game: BattleGameState): EnemyS
     ec.addChild(badgeText);
 
     // 名字
-    const name = createText(enemy.name, { size: s(12), color: 0x44ff44, bold: true });
+    const name = createText(enemy.name, { size: s(19), color: 0x44ff44, bold: true });
     name.anchor.set(0.5, 1);
-    name.x = 0; name.y = -s(35);
+    name.x = 0; name.y = -s(56);
     ec.addChild(name);
 
     // HP 条
     const hpRatio = enemy.hp / enemy.maxHp;
-    const hpBarW = s(50);
-    const hpBar = createProgressBar(hpBarW, s(6), hpRatio, {
+    const hpBarW = s(80);
+    const hpBar = createProgressBar(hpBarW, s(10), hpRatio, {
       fill: hpRatio > 0.5 ? 0xcc2200 : hpRatio > 0.25 ? 0xe86820 : 0xff3333,
     });
-    hpBar.x = -hpBarW / 2; hpBar.y = s(24);
+    hpBar.x = -hpBarW / 2; hpBar.y = s(39);
     ec.addChild(hpBar);
 
     // HP 数字
-    const hpText = createText(`${enemy.hp}/${enemy.maxHp}`, { size: s(9), color: 0xff8866 });
+    const hpText = createText(`${enemy.hp}/${enemy.maxHp}`, { size: s(14), color: 0xff8866 });
     hpText.anchor.set(0.5, 0);
-    hpText.x = 0; hpText.y = s(32);
+    hpText.x = 0; hpText.y = s(51);
     ec.addChild(hpText);
 
     // 状态图标行（buff/debuff 简化显示）

@@ -1,19 +1,19 @@
-/**
- * StartScene - 开始界面 (PixiJS)
- * 精确还原原版 React StartScreen
- * 原版设计宽度 448px -> Canvas 720px, S = 1.607
+﻿/**
+ * StartScene - 瀵偓婵鏅棃?(PixiJS)
+ * 缁墽鈥樻潻妯哄斧閸樼喓澧?React StartScreen
+ * 閸樼喓澧楃拋鎹愵吀鐎硅棄瀹?448px -> Canvas 720px, S = 1.607
  *
- * 发光效果方案：手绘多层同心半透明 Graphics 环 + 粒子光晕。
- * 完全不使用 filter（GlowFilter / BlurFilter），像素图永远锐利。
- * - 静态底光：多圈渐变透明椭圆 Graphics，模拟柔和光晕底色
- * - 粒子光晕：小方块粒子沿椭圆轨道环绕飘动，密集叠加形成动态光晕
- * - 呼吸动画：整体 alpha 随 sin 波动，模拟原版 CSS drop-shadow 呼吸
+ * 閸欐垵鍘滈弫鍫熺亯閺傝顢嶉敍姘缂佹ê顦跨仦鍌氭倱韫囧啫宕愰柅蹇旀 Graphics 閻?+ 缁帒鐡欓崗澶嬫閵?
+ * 鐎瑰苯鍙忔稉宥勫▏閻?filter閿涘湙lowFilter / BlurFilter閿涘绱濋崓蹇曠閸ョ偓妗堟潻婊堟敿閸掆斂鈧?
+ * - 闂堟瑦鈧礁绨抽崗澶涚窗婢舵艾婀€濞撴劕褰夐柅蹇旀濡烆厼娓?Graphics閿涘本膩閹风喐鐓嶉崪灞藉帨閺呮洖绨抽懝?
+ * - 缁帒鐡欓崗澶嬫閿涙艾鐨弬鐟版健缁帒鐡欏▽鎸庛亶閸﹀棜寤洪柆鎾跺箚缂佹洟顥濋崝顭掔礉鐎靛棝娉﹂崣鐘插瑜般垺鍨氶崝銊︹偓浣稿帨閺?
+ * - 閸涚厧鎯涢崝銊ф暰閿涙碍鏆ｆ担?alpha 闂?sin 濞夈垹濮╅敍灞灸侀幏鐔峰斧閻?CSS drop-shadow 閸涚厧鎯?
  */
 import { Container, Text, TextStyle, Sprite } from 'pixi.js';
 import { Graphics } from 'pixi.js';
 import type { GameScene } from '../SceneManager';
 import type { GameApp } from '../GameApp';
-import { createText, COLORS, FONT, S } from '../UIFactory';
+import { createText, COLORS, FONT } from '../UIFactory';
 import { getPixelSprite, getIcon } from '../AssetProvider';
 import { playSfx } from '../SoundBridge';
 import { TweenManager, Ease } from '../animation/Tween';
@@ -23,23 +23,15 @@ import imgStartP from '../../assets/img_btn_start_pressed.png';
 import imgShopN from '../../assets/img_btn_soulshop_normal.png';
 import imgShopP from '../../assets/img_btn_soulshop_pressed.png';
 
+/** 9:16 开始界面背景图（public/ui/ 下） */
+const BG_IMAGE_URL = 'ui/img_bg_loading.png';
+
 const W = 720;
-const s = (v: number) => Math.round(v * S);
+// 720x1280 寮€鍙戝垎杈ㄧ巼涓嬬洿鎺ヤ娇鐢?px 鍊?
+const s = (v: number) => v;
 
-const GRID_COLORS = [
-  { x: 0, y: 0, w: 2, h: 2, c: 0x242220, a: 0.8 },
-  { x: 4, y: 2, w: 2, h: 2, c: 0x100e0c, a: 0.7 },
-  { x: 2, y: 4, w: 2, h: 2, c: 0x282624, a: 0.6 },
-  { x: 6, y: 6, w: 2, h: 2, c: 0x100e0c, a: 0.7 },
-  { x: 0, y: 6, w: 2, h: 1, c: 0x2c2a26, a: 0.5 },
-  { x: 6, y: 0, w: 1, h: 2, c: 0x262420, a: 0.5 },
-  { x: 3, y: 1, w: 1, h: 1, c: 0x302e2a, a: 0.4 },
-  { x: 5, y: 5, w: 1, h: 1, c: 0x0c0a08, a: 0.5 },
-  { x: 1, y: 3, w: 1, h: 1, c: 0x343230, a: 0.35 },
-  { x: 7, y: 3, w: 1, h: 1, c: 0x201e1c, a: 0.4 },
-];
 
-/** 背景漂浮粒子 */
+/** 閼冲本娅欏鍌涜癁缁帒鐡?*/
 interface FloatParticle {
   g: Graphics;
   x: number; y: number;
@@ -48,7 +40,7 @@ interface FloatParticle {
   size: number; opacity: number;
 }
 
-/** 光晕粒子：沿椭圆轨道环绕 */
+/** 閸忓妾跨划鎺戠摍閿涙碍閮ㄥ顓炴妇鏉炪劑浜鹃悳顖滅搏 */
 interface GlowMote {
   g: Graphics;
   angle: number;
@@ -57,11 +49,11 @@ interface GlowMote {
   radiusY: number;
   baseAlpha: number;
   size: number;
-  /** 距离中心的层级(0=最内, 1=中, 2=最外)，越外越淡 */
+  /** 鐠烘繄顬囨稉顓炵妇閻ㄥ嫬鐪扮痪?0=閺堚偓閸? 1=娑? 2=閺堚偓婢?閿涘矁绉烘径鏍Ш濞?*/
   layer: number;
 }
 
-/** 粒子光晕系统 */
+/** 缁帒鐡欓崗澶嬫缁崵绮?*/
 interface ParticleAura {
   container: Container;
   staticGlow: Graphics;
@@ -83,6 +75,7 @@ export class StartScene implements GameScene {
   private fading = false;
   private contentTotalH = 0;
   private soulShopModal: SoulShopModal | null = null;
+  private bgSprite: Sprite | null = null;
 
   constructor(gameApp: GameApp) {
     this.gameApp = gameApp;
@@ -107,6 +100,7 @@ export class StartScene implements GameScene {
     this.subtitleText = null;
     this.btnAura = null;
     this.contentTotalH = 0;
+    this.bgSprite = null;
     if (this.soulShopModal) {
       this.soulShopModal.destroy();
       this.soulShopModal = null;
@@ -119,44 +113,44 @@ export class StartScene implements GameScene {
     const dt = delta * 0.016;
     this.time += dt;
 
-    // 实时居中适配：designH 随窗口变化，content 要始终垂直居中
+    // 鐎圭偞妞傜仦鍛厬闁倿鍘ら敍姝瀍signH 闂呭繒鐛ラ崣锝呭綁閸栨牭绱漜ontent 鐟曚礁顫愮紒鍫濈€惄鏉戠湷娑?
     if (this.contentLayer && this.contentTotalH > 0) {
       const H = this.gameApp.designH;
-      this.contentLayer.y = Math.max((H - this.contentTotalH) / 2, s(24));
+      this.contentLayer.y = Math.max((H - this.contentTotalH) / 2, s(39));
     }
 
-    // 骰子浮动
+    // 妤犳澘鐡欏ù顔煎З
     if (this.diceWrapper) {
-      this.diceWrapper.y = this.diceBaseY + Math.sin(this.time * 2.1) * s(8);
+      this.diceWrapper.y = this.diceBaseY + Math.sin(this.time * 2.1) * s(13);
       this.diceWrapper.rotation = Math.sin(this.time * 0.8) * 0.07;
     }
 
-    // 骰子粒子光晕呼吸
+    // 妤犳澘鐡欑划鎺戠摍閸忓妾块崨鐓庢儧
     if (this.diceAura) {
-      const phase = (Math.sin(this.time * 2.51) + 1) / 2; // 0→1
-      // 静态底光呼吸: alpha 0.25→0.65
+      const phase = (Math.sin(this.time * 2.51) + 1) / 2; // 0閳?
+      // 闂堟瑦鈧礁绨抽崗澶婃嚑閸? alpha 0.25閳?.65
       this.diceAura.staticGlow.alpha = 0.25 + phase * 0.40;
       this.updateAuraMotes(this.diceAura, dt, phase);
     }
 
-    // 中心脉冲光晕
+    // 娑擃厼绺鹃懘澶婂暱閸忓妾?
     if (this.glowGraphics) {
       this.glowGraphics.alpha = 0.03 + (Math.sin(this.time * 1.57) + 1) / 2 * 0.05;
     }
 
-    // 副标题呼吸
+    // 閸擃垱鐖ｆ０妯烘嚑閸?
     if (this.subtitleText) {
       this.subtitleText.alpha = 0.6 + (Math.sin(this.time * 2.1) + 1) / 2 * 0.4;
     }
 
-    // 按钮粒子光晕呼吸
+    // 閹稿鎸崇划鎺戠摍閸忓妾块崨鐓庢儧
     if (this.btnAura) {
       const btnPhase = (Math.sin(this.time * 3.14) + 1) / 2;
       this.btnAura.staticGlow.alpha = 0.12 + btnPhase * 0.23;
       this.updateAuraMotes(this.btnAura, dt, btnPhase);
     }
 
-    // 背景漂浮粒子
+    // 閼冲本娅欏鍌涜癁缁帒鐡?
     for (const p of this.particles) {
       p.life -= dt;
       if (p.life <= 0) this.resetBgParticle(p);
@@ -171,13 +165,13 @@ export class StartScene implements GameScene {
     }
   };
 
-  /** 更新光晕粒子：沿椭圆轨道运动 + 呼吸 alpha */
+  /** 閺囧瓨鏌婇崗澶嬫缁帒鐡欓敍姘儴濡烆厼娓炬潪銊╀壕鏉╂劕濮?+ 閸涚厧鎯?alpha */
   private updateAuraMotes(aura: ParticleAura, dt: number, breathPhase: number) {
     for (const m of aura.motes) {
       m.angle += m.speed * dt;
       m.g.x = Math.cos(m.angle) * m.radiusX;
       m.g.y = Math.sin(m.angle) * m.radiusY;
-      // 层级越外基础alpha越低，呼吸时整体变亮
+      // 鐏炲倻楠囩搾濠傤樆閸╄櫣顢卆lpha鐡掑﹣缍嗛敍灞芥嚑閸氬憡妞傞弫缈犵秼閸欐ü瀵?
       const layerMul = m.layer === 0 ? 1.0 : m.layer === 1 ? 0.75 : 0.45;
       m.g.alpha = m.baseAlpha * layerMul * (0.5 + breathPhase * 0.5);
     }
@@ -190,8 +184,8 @@ export class StartScene implements GameScene {
     const duration = 2 + Math.random() * 3;
     p.life = duration;
     p.maxLife = duration;
-    p.vy = -s(100) / duration;
-    p.vx = s(15) / duration;
+    p.vy = -s(161) / duration;
+    p.vx = s(24) / duration;
   }
 
   private build() {
@@ -200,9 +194,9 @@ export class StartScene implements GameScene {
     this.createBgParticles(H);
     this.buildContent(H);
     this.drawScanlines(H);
-    const version = createText('v0.9', { size: s(7), color: COLORS.textDim });
-    version.x = s(10);
-    version.y = H - s(20);
+    const version = createText('v0.9', { size: s(11), color: COLORS.textDim });
+    version.x = s(16);
+    version.y = H - s(32);
     this.container.addChild(version);
     this.playEntrance();
   }
@@ -210,43 +204,43 @@ export class StartScene implements GameScene {
   private buildContent(H: number) {
     const content = new Container();
     this.contentLayer = content;
-    const diceSize = s(56);
-    const diceGap = s(36);    // 骰子到标题的间距（拉大）
-    const titleH = s(40);
-    const subH = s(14);
-    const btnH = s(40);
-    const shopBtnH = s(36);
-    const tutH = s(14);
-    this.contentTotalH = diceSize + diceGap + titleH + s(8) + subH + s(40)
-      + btnH + s(28) + shopBtnH + s(20) + tutH;
+    const diceSize = s(90);
+    const diceGap = s(58);    // 妤犳澘鐡欓崚鐗堢垼妫版娈戦梻纾嬬獩閿涘牊濯烘径褝绱?
+    const titleH = s(64);
+    const subH = s(22);
+    const btnH = s(64);
+    const shopBtnH = s(58);
+    const tutH = s(22);
+    this.contentTotalH = diceSize + diceGap + titleH + s(13) + subH + s(64)
+      + btnH + s(45) + shopBtnH + s(32) + tutH;
     let curY = 0;
     this.createGoldDice(content, curY + diceSize / 2);
     curY += diceSize + diceGap;
     this.createTitle(content, curY + titleH / 2);
-    curY += titleH + s(8);
+    curY += titleH + s(13);
     this.createSubtitle(content, curY);
-    curY += subH + s(40);
+    curY += subH + s(64);
     this.createStartButton(content, curY);
-    curY += btnH + s(28);
+    curY += btnH + s(45);
     this.createShopButton(content, curY);
-    curY += shopBtnH + s(20);
+    curY += shopBtnH + s(32);
     this.createTutorialButton(content, curY);
     content.x = 0;
-    content.y = Math.max((H - this.contentTotalH) / 2, s(24));
+    content.y = Math.max((H - this.contentTotalH) / 2, s(39));
     this.container.addChild(content);
   }
 
-  // ===== 粒子光晕系统 =====
+  // ===== 缁帒鐡欓崗澶嬫缁崵绮?=====
 
   /**
-   * 创建粒子光晕：围绕目标中心的多层半透明小方块 + 静态渐变底光。
-   * 完全不使用 filter，用 additive blending 般的半透明叠加实现柔和效果。
+   * 閸掓稑缂撶划鎺戠摍閸忓妾块敍姘纯缂佹洜娲伴弽鍥﹁厬韫囧啰娈戞径姘湴閸楀﹪鈧繑妲戠亸蹇旀煙閸?+ 闂堟瑦鈧焦绗庨崣妯虹俺閸忓鈧?
+   * 鐎瑰苯鍙忔稉宥勫▏閻?filter閿涘瞼鏁?additive blending 閼割剛娈戦崡濠団偓蹇旀閸欑姴濮炵€圭偟骞囬弻鏂挎嫲閺佸牊鐏夐妴?
    *
-   * @param halfW 目标半宽
-   * @param halfH 目标半高
-   * @param color 光晕颜色
-   * @param moteCount 粒子总数 (建议 20~40)
-   * @param layers 层数配置 [{radiusScale, count}]
+   * @param halfW 閻╊喗鐖ｉ崡濠傤啍
+   * @param halfH 閻╊喗鐖ｉ崡濠囩彯
+   * @param color 閸忓妾挎０婊嗗
+   * @param moteCount 缁帒鐡欓幀缁樻殶 (瀵ら缚顔?20~40)
+   * @param layers 鐏炲倹鏆熼柊宥囩枂 [{radiusScale, count}]
    */
   private createParticleAura(
     halfW: number, halfH: number, color: number,
@@ -254,14 +248,14 @@ export class StartScene implements GameScene {
   ): ParticleAura {
     const auraContainer = new Container();
 
-    // 1) 静态底光：多圈同心渐变椭圆，无 filter
+    // 1) 闂堟瑦鈧礁绨抽崗澶涚窗婢舵艾婀€閸氬苯绺惧〒鎰綁濡烆厼娓鹃敍灞炬￥ filter
     const staticGlow = new Graphics();
     const ringCount = 12;
     for (let i = ringCount; i >= 0; i--) {
       const ratio = i / ringCount;
       const rx = halfW * (1.0 + ratio * 1.8);
       const ry = halfH * (1.0 + ratio * 1.8);
-      // 从外到内：外圈极淡，内圈略浓
+      // 娴犲骸顦婚崚鏉垮敶閿涙艾顦婚崷鍫熺€ǎ鈽呯礉閸愬懎婀€閻ｃ儲绁?
       const a = 0.06 * (1 - ratio * 0.6);
       staticGlow.beginFill(color, a);
       staticGlow.drawEllipse(0, 0, rx, ry);
@@ -270,7 +264,7 @@ export class StartScene implements GameScene {
     staticGlow.alpha = 0.45;
     auraContainer.addChild(staticGlow);
 
-    // 2) 光晕粒子：分层环绕
+    // 2) 閸忓妾跨划鎺戠摍閿涙艾鍨庣仦鍌滃箚缂?
     const motes: GlowMote[] = [];
     for (let li = 0; li < layers.length; li++) {
       const layer = layers[li];
@@ -306,32 +300,63 @@ export class StartScene implements GameScene {
     return { container: auraContainer, staticGlow, motes };
   }
 
-  // ===== 背景 =====
+  // ===== 閼冲本娅?=====
 
   private drawBackground(H: number) {
+    // 1) Fallback solid color (visible before image loads)
     const bg = new Graphics();
-    bg.beginFill(0x0a0908);
+    bg.beginFill(0x0c0810);
     bg.drawRect(0, 0, W, H);
     bg.endFill();
     this.container.addChild(bg);
-    this.drawPixelGrid(H);
+
+    // 2) 9:16 background image - cover mode to fill design area
+    const bgSprite = Sprite.from(BG_IMAGE_URL);
+    bgSprite.anchor.set(0.5, 0.5);
+    bgSprite.x = W / 2;
+    bgSprite.y = H / 2;
+
+    const applyCover = () => {
+      const texW = bgSprite.texture.width;
+      const texH = bgSprite.texture.height;
+      if (texW === 0 || texH === 0) return;
+      // cover: use the larger scale ratio to ensure full coverage
+      const coverScale = Math.max(W / texW, H / texH);
+      bgSprite.scale.set(coverScale, coverScale);
+    };
+
+    if (bgSprite.texture.valid) {
+      applyCover();
+    } else {
+      bgSprite.texture.baseTexture.once('loaded', applyCover);
+    }
+    this.bgSprite = bgSprite;
+    this.container.addChild(bgSprite);
+
+    // 3) Vignette overlay
     this.drawVignette(H);
+
+    // 4) Top fog (improves title readability)
     const topFog = new Graphics();
     for (let i = 0; i < 20; i++) {
-      topFog.beginFill(0x040306, 0.7 * (1 - i / 20));
+      topFog.beginFill(0x060410, 0.5 * (1 - i / 20));
       topFog.drawRect(0, Math.floor(H * 0.3 * i / 20), W, Math.ceil(H * 0.3 / 20) + 1);
       topFog.endFill();
     }
     this.container.addChild(topFog);
+
+    // 5) Bottom fog
     const bottomFog = new Graphics();
     for (let i = 0; i < 20; i++) {
-      bottomFog.beginFill(0x040306, 0.8 * (i / 20));
+      bottomFog.beginFill(0x060410, 0.6 * (i / 20));
       bottomFog.drawRect(0, Math.floor(H * 0.75 + H * 0.25 * i / 20), W, Math.ceil(H * 0.25 / 20) + 1);
       bottomFog.endFill();
     }
     this.container.addChild(bottomFog);
+
+    // 6) Center glow (breathing animation preserved)
     const glow = new Graphics();
-    const glowR = s(180);
+    const glowR = s(289);
     for (let i = 20; i >= 0; i--) {
       const r = glowR * (i / 20);
       glow.beginFill(0xd4a030, 0.12 * (1 - i / 20));
@@ -342,28 +367,6 @@ export class StartScene implements GameScene {
     this.container.addChild(glow);
   }
 
-  private drawPixelGrid(H: number) {
-    const grid = new Graphics();
-    const tileSize = 8;
-    const cols = Math.ceil(W / tileSize);
-    const rows = Math.ceil(H / tileSize);
-    grid.beginFill(0x181614);
-    grid.drawRect(0, 0, W, H);
-    grid.endFill();
-    for (let col = 0; col < cols; col++) {
-      for (let row = 0; row < rows; row++) {
-        const ox = col * tileSize;
-        const oy = row * tileSize;
-        for (const cell of GRID_COLORS) {
-          grid.beginFill(cell.c, cell.a);
-          grid.drawRect(ox + cell.x, oy + cell.y, cell.w, cell.h);
-          grid.endFill();
-        }
-      }
-    }
-    grid.alpha = 0.3;
-    this.container.addChild(grid);
-  }
 
   private drawVignette(H: number) {
     const vig = new Graphics();
@@ -377,14 +380,14 @@ export class StartScene implements GameScene {
       if (ratio > 0.6) alpha = 0.85 * ((ratio - 0.6) / 0.4);
       else if (ratio > 0.2) alpha = 0.4 * ((ratio - 0.2) / 0.4);
       else alpha = 0;
-      vig.beginFill(0x060408, 0.85 - alpha);
+      vig.beginFill(0x0c0810, 0.85 - alpha);
       vig.drawEllipse(cx, cy, r * 1.1, r * 0.9);
       vig.endFill();
     }
     this.container.addChild(vig);
   }
 
-  // ===== 背景漂浮粒子 =====
+  // ===== 閼冲本娅欏鍌涜癁缁帒鐡?=====
 
   private createBgParticles(H: number) {
     for (let i = 0; i < 8; i++) {
@@ -403,14 +406,14 @@ export class StartScene implements GameScene {
       this.container.addChild(g);
       this.particles.push({
         g, x, y,
-        vy: -s(100) / duration, vx: s(15) / duration,
+        vy: -s(161) / duration, vx: s(24) / duration,
         life: Math.random() * duration, maxLife: duration,
         size, opacity: 0.5 + Math.random() * 0.3,
       });
     }
   }
 
-  // ===== 金色骰子 =====
+  // ===== 闁叉垼澹婃鏉跨摍 =====
 
   private createGoldDice(parent: Container, centerY: number) {
     const wrapper = new Container();
@@ -424,23 +427,23 @@ export class StartScene implements GameScene {
       [HL, F, F, F, F, F, D],
       [B, D, D, D, D, D, B],
     ];
-    const diceScale = s(8);
+    const diceScale = s(13);
     const diceW = 7 * diceScale;
     const diceH = 7 * diceScale;
 
-    // 1) 粒子光晕（放在骰子下方，三层环绕）
+    // 1) 缁帒鐡欓崗澶嬫閿涘牊鏂侀崷銊╊€忕€涙劒绗呴弬鐧哥礉娑撳鐪伴悳顖滅搏閿?
     const aura = this.createParticleAura(
       diceW / 2, diceH / 2, 0xd4a030,
       [
-        { radiusScale: 1.1, count: 8,  sizeRange: [s(3), s(6)] },   // 内层：紧贴骰子
-        { radiusScale: 1.8, count: 9,  sizeRange: [s(4), s(7)] },   // 中层
-        { radiusScale: 2.8, count: 6,  sizeRange: [s(3), s(5)] },   // 外层：远距离淡光
+        { radiusScale: 1.1, count: 8,  sizeRange: [s(5), s(10)] },   // 閸愬懎鐪伴敍姘辨彛鐠愭挳顎忕€?
+        { radiusScale: 1.8, count: 9,  sizeRange: [s(6), s(11)] },   // 娑擃厼鐪?
+        { radiusScale: 2.8, count: 6,  sizeRange: [s(5), s(8)] },   // 婢舵牕鐪伴敍姘崇箼鐠烘繄顬囧ǎ鈥冲帨
       ],
     );
     wrapper.addChild(aura.container);
     this.diceAura = aura;
 
-    // 2) 像素骰子（无 filter，保持锐利）
+    // 2) 閸嶅繒绀屾鏉跨摍閿涘牊妫?filter閿涘奔绻氶幐渚€鏀奸崚鈺嬬礆
     const dice = getPixelSprite(dicePixels, diceScale, 'gold_dice_start');
     dice.x = -diceW / 2;
     dice.y = -diceH / 2;
@@ -453,40 +456,40 @@ export class StartScene implements GameScene {
     parent.addChild(wrapper);
   }
 
-  // ===== 标题 =====
+  // ===== 閺嶅洭顣?=====
 
   private createTitle(parent: Container, centerY: number) {
     const baseStyle = {
       fontFamily: FONT.pixel,
-      fontSize: s(36),
+      fontSize: s(58),
       fontWeight: 'bold' as const,
-      letterSpacing: s(5),
-      padding: s(8),
+      letterSpacing: s(8),
+      padding: s(13),
       dropShadow: true,
       dropShadowColor: 0x000000,
-      dropShadowDistance: s(4),
+      dropShadowDistance: s(6),
       dropShadowAngle: Math.PI / 4,
       dropShadowBlur: 0,
       dropShadowAlpha: 0.9,
     };
     const titleLeft = new Text('\u516d\u9762', new TextStyle({ ...baseStyle, fill: COLORS.textBright }));
     titleLeft.anchor.set(1, 0.5);
-    titleLeft.x = W / 2 + s(3);
+    titleLeft.x = W / 2 + s(5);
     titleLeft.y = centerY;
     parent.addChild(titleLeft);
-    const titleRight = new Text('\u53f2\u8bd7', new TextStyle({ ...baseStyle, fill: COLORS.green }));
+    const titleRight = new Text('\u6218\u5f79', new TextStyle({ ...baseStyle, fill: COLORS.green }));
     titleRight.anchor.set(0, 0.5);
-    titleRight.x = W / 2 + s(3);
+    titleRight.x = W / 2 + s(5);
     titleRight.y = centerY;
     parent.addChild(titleRight);
   }
 
   private createSubtitle(parent: Container, topY: number) {
-    const subtitle = new Text('\u25c6  SIX-SIDED SAGA  \u25c6', new TextStyle({
-      fontFamily: FONT.pixel, fontSize: s(10), fill: COLORS.gold,
-      letterSpacing: s(2), padding: s(4),
+    const subtitle = new Text('\u25c6  SIX-SIDED BATTLE  \u25c6', new TextStyle({
+      fontFamily: FONT.pixel, fontSize: s(16), fill: COLORS.gold,
+      letterSpacing: s(3), padding: s(6),
       dropShadow: true, dropShadowColor: 0x000000,
-      dropShadowDistance: s(2), dropShadowAngle: Math.PI / 4,
+      dropShadowDistance: s(3), dropShadowAngle: Math.PI / 4,
       dropShadowBlur: 0, dropShadowAlpha: 0.8,
     }));
     subtitle.anchor.set(0.5, 0);
@@ -496,9 +499,9 @@ export class StartScene implements GameScene {
     parent.addChild(subtitle);
   }
 
-  // ===== 按钮 =====
+  // ===== 閹稿鎸?=====
 
-  /** 构建图片按钮：两张独立图片做Normal/Pressed切换 */
+  /** 閺嬪嫬缂撻崶鍓у閹稿鎸抽敍姘⒈瀵姷瀚粩瀣禈閻楀洤浠汵ormal/Pressed閸掑洦宕?*/
   private buildImageButton(
     parent: Container, topY: number,
     normalUrl: string, pressedUrl: string,
@@ -506,9 +509,9 @@ export class StartScene implements GameScene {
     iconName: string, iconSize: number,
     textColor: number, fontSize: number,
     onTap: () => void,
-    /** 文字垂直位置系数 0~1, 默认0.45 */
+    /** 閺傚洤鐡ч崹鍌滄纯娴ｅ秶鐤嗙化缁樻殶 0~1, 姒涙顓?.45 */
     contentY = 0.45,
-    /** 是否加粒子光晕 */
+    /** 閺勵垰鎯侀崝鐘电煈鐎涙劕鍘滈弲?*/
     withAura = false,
   ) {
     const wrapper = new Container();
@@ -518,11 +521,11 @@ export class StartScene implements GameScene {
     const normalBg = Sprite.from(normalUrl);
     const pressedBg = Sprite.from(pressedUrl);
 
-    // 等图片加载完再布局
+    // 缁涘娴橀悧鍥у鏉炶棄鐣崘宥呯鐏炩偓
     const tryLayout = () => {
       if (!normalBg.texture.valid || !pressedBg.texture.valid) return;
 
-      // 等比缩放到目标宽度
+      // 缁涘鐦紓鈺傛杹閸掓壆娲伴弽鍥ь啍鎼?
       const scale = btnW / normalBg.texture.width;
       normalBg.scale.set(scale, scale);
       pressedBg.scale.set(scale, scale);
@@ -532,13 +535,13 @@ export class StartScene implements GameScene {
 
       const btnH = normalBg.height;
 
-      // 图标 + 文字
+      // 閸ョ偓鐖?+ 閺傚洤鐡?
       const icon = getIcon(iconName, iconSize);
       const text = createText(label, {
         size: fontSize, color: textColor, bold: true,
-        shadow: true, shadowDistance: Math.round(S * 2), shadowAlpha: 0.9,
+        shadow: true, shadowDistance: 3, shadowAlpha: 0.9,
       });
-      const gap = s(6);
+      const gap = s(10);
       const totalW = icon.width + gap + text.width;
       const startX = (btnW - totalW) / 2;
       const cy = btnH * contentY;
@@ -555,8 +558,8 @@ export class StartScene implements GameScene {
       contentLayer.addChild(text);
       wrapper.addChild(contentLayer);
 
-      // 按下：切换背景 + 文字图标跟随下移
-      const pressOff = Math.round(2 * S);
+      // 閹稿绗呴敍姘瀼閹广垼鍎楅弲?+ 閺傚洤鐡ч崶鐐垼鐠虹喖娈㈡稉瀣?
+      const pressOff = 3;
       wrapper.on('pointerdown', () => {
         normalBg.visible = false;
         pressedBg.visible = true;
@@ -574,13 +577,13 @@ export class StartScene implements GameScene {
       });
       wrapper.on('pointertap', onTap);
 
-      // 光晕
+      // 閸忓妾?
       if (withAura) {
         const aura = this.createParticleAura(
           btnW / 2, btnH / 2, 0x3cc864,
           [
-            { radiusScale: 1.2, count: 8, sizeRange: [s(3), s(5)] },
-            { radiusScale: 2.0, count: 6, sizeRange: [s(2), s(4)] },
+            { radiusScale: 1.2, count: 8, sizeRange: [s(5), s(8)] },
+            { radiusScale: 2.0, count: 6, sizeRange: [s(3), s(6)] },
           ],
         );
         aura.container.x = btnW / 2;
@@ -590,7 +593,7 @@ export class StartScene implements GameScene {
       }
     };
 
-    // 确保纹理加载完成
+    // 绾喕绻氱痪鍦倞閸旂姾娴囩€瑰本鍨?
     if (normalBg.texture.valid && pressedBg.texture.valid) {
       tryLayout();
     } else {
@@ -610,9 +613,9 @@ export class StartScene implements GameScene {
     this.buildImageButton(
       parent, topY,
       imgStartN, imgStartP,
-      '\u5f00\u542f\u5f81\u7a0b', s(200),
-      'sword', s(20),
-      0xf0ffe0, s(15),
+      '\u5f00\u542f\u5f81\u7a0b', s(321),
+      'sword', s(32),
+      0xf0ffe0, s(24),
       () => this.handleStart(),
       0.45, true,
     );
@@ -622,9 +625,9 @@ export class StartScene implements GameScene {
     this.buildImageButton(
       parent, topY,
       imgShopN, imgShopP,
-      '\u9b42\u6676\u5546\u5e97', s(200),
-      'soul_crystal', s(18),
-      0xe0c0ff, s(14),
+      '\u9b42\u6676\u5546\u5e97', s(321),
+      'soul_crystal', s(29),
+      0xe0c0ff, s(22),
       () => this.openSoulShop(),
     );
   }
@@ -633,13 +636,13 @@ export class StartScene implements GameScene {
     const tutorialBtn = new Container();
     tutorialBtn.eventMode = 'static';
     tutorialBtn.cursor = 'pointer';
-    const bookSmall = getIcon('book', s(14));
+    const bookSmall = getIcon('book', s(22));
     tutorialBtn.addChild(bookSmall);
-    const tutText = createText('\u67e5\u770b\u6559\u7a0b', { size: s(9), color: COLORS.textDim });
-    tutText.x = bookSmall.width + s(4);
+    const tutText = createText('\u67e5\u770b\u6559\u7a0b', { size: s(14), color: COLORS.textDim });
+    tutText.x = bookSmall.width + s(6);
     tutText.y = (bookSmall.height - tutText.height) / 2;
     tutorialBtn.addChild(tutText);
-    const totalW = bookSmall.width + s(4) + tutText.width;
+    const totalW = bookSmall.width + s(6) + tutText.width;
     tutorialBtn.x = (W - totalW) / 2;
     tutorialBtn.y = topY;
     tutorialBtn.on('pointerover', () => { tutText.style.fill = COLORS.green; });
@@ -647,7 +650,7 @@ export class StartScene implements GameScene {
     parent.addChild(tutorialBtn);
   }
 
-  // ===== 覆盖层 =====
+  // ===== 鐟曞棛娲婄仦?=====
 
   private drawScanlines(H: number) {
     const scanlines = new Graphics();
@@ -659,7 +662,7 @@ export class StartScene implements GameScene {
     this.container.addChild(scanlines);
   }
 
-  // ===== 入场动画 =====
+  // ===== 閸忋儱婧€閸斻劎鏁?=====
 
   private playEntrance() {
     if (!this.contentLayer) return;
@@ -668,7 +671,7 @@ export class StartScene implements GameScene {
       if (!child) continue;
       const origY = child.y;
       const origAlpha = child.alpha;
-      child.y = origY + s(20);
+      child.y = origY + s(32);
       child.alpha = 0;
       TweenManager.to(child, { y: origY, alpha: origAlpha }, {
         duration: 0.8, ease: Ease.easeOut, delay: 0.1 + i * 0.06,
@@ -676,7 +679,7 @@ export class StartScene implements GameScene {
     }
   }
 
-  // ===== 交互 =====
+  // ===== 娴溿倓绨?=====
 
   private openSoulShop() {
     if (this.soulShopModal) {
@@ -706,7 +709,7 @@ export class StartScene implements GameScene {
     });
   }
 
-  // ===== 工具 =====
+  // ===== 瀹搞儱鍙?=====
 
   private hslToHex(h: number, sat: number, l: number): number {
     const sn = sat / 100;
