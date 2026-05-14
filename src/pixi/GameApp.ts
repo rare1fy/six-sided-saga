@@ -18,7 +18,6 @@ import { SceneManager } from './SceneManager';
 import { StartScene } from './scenes/StartScene';
 import { TweenManager } from './animation/Tween';
 import { initAssetProvider } from './AssetProvider';
-import { initDebugGUI, setDebugOnChange } from './debug/DebugGUI';
 
 export class GameApp {
   app: PIXI.Application;
@@ -90,12 +89,6 @@ export class GameApp {
 
     // 从开始界面进入
     this.sceneManager.switchTo('start');
-
-    // Debug GUI — 开发阶段实时调参（发布时删除此行）
-    initDebugGUI(() => {
-      // 参数变化时重建当前场景
-      this.sceneManager.rebuildCurrentScene();
-    });
   }
 
   resize() {

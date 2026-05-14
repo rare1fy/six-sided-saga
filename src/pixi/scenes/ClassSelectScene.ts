@@ -24,7 +24,7 @@ import { createInitialGameState } from '../../logic/gameInit';
 import { TweenManager, Ease } from '../animation/Tween';
 import gsap from 'gsap';
 import { playSfx } from '../SoundBridge';
-import { TUNING } from '../debug/DebugGUI';
+import { TUNING } from '../ui/UIConstants';
 
 // ============================================================
 // 常量 — 基于 ART_SPEC 规范

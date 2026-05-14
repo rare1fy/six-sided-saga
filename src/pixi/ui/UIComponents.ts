@@ -13,7 +13,7 @@
  * - Badge: 徽章
  */
 import { Container, Graphics } from 'pixi.js';
-import { TUNING } from '../debug/DebugGUI';
+import { TUNING } from './UIConstants';
 
 // ══════════════════════════════════════════════════════════════
 // 配色板 — v4 暗紫底 + 酒红边框 + 米白线条
