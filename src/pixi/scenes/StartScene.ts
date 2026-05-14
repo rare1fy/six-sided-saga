@@ -333,33 +333,33 @@ export class StartScene implements GameScene {
     this.bgSprite = bgSprite;
     this.container.addChild(bgSprite);
 
-    // 3) Vignette overlay
+    // 3) Lightweight vignette - only darken edges so BG image stays visible
     this.drawVignette(H);
 
-    // 4) Top fog (improves title readability)
+    // 4) Subtle top fog (just enough for title readability)
     const topFog = new Graphics();
     for (let i = 0; i < 20; i++) {
-      topFog.beginFill(0x060410, 0.5 * (1 - i / 20));
-      topFog.drawRect(0, Math.floor(H * 0.3 * i / 20), W, Math.ceil(H * 0.3 / 20) + 1);
+      topFog.beginFill(0x060410, 0.18 * (1 - i / 20));
+      topFog.drawRect(0, Math.floor(H * 0.2 * i / 20), W, Math.ceil(H * 0.2 / 20) + 1);
       topFog.endFill();
     }
     this.container.addChild(topFog);
 
-    // 5) Bottom fog
+    // 5) Subtle bottom fog
     const bottomFog = new Graphics();
     for (let i = 0; i < 20; i++) {
-      bottomFog.beginFill(0x060410, 0.6 * (i / 20));
-      bottomFog.drawRect(0, Math.floor(H * 0.75 + H * 0.25 * i / 20), W, Math.ceil(H * 0.25 / 20) + 1);
+      bottomFog.beginFill(0x060410, 0.25 * (i / 20));
+      bottomFog.drawRect(0, Math.floor(H * 0.8 + H * 0.2 * i / 20), W, Math.ceil(H * 0.2 / 20) + 1);
       bottomFog.endFill();
     }
     this.container.addChild(bottomFog);
 
-    // 6) Center glow (breathing animation preserved)
+    // 6) Center glow (reduced to not overpower BG)
     const glow = new Graphics();
     const glowR = s(289);
     for (let i = 20; i >= 0; i--) {
       const r = glowR * (i / 20);
-      glow.beginFill(0xd4a030, 0.12 * (1 - i / 20));
+      glow.beginFill(0xd4a030, 0.06 * (1 - i / 20));
       glow.drawEllipse(W / 2, H * 0.28, r * 1.2, r * 0.8);
       glow.endFill();
     }
@@ -376,11 +376,11 @@ export class StartScene implements GameScene {
     for (let i = 30; i >= 0; i--) {
       const ratio = i / 30;
       const r = maxR * ratio;
+      // Only darken the outermost edges; keep center transparent
       let alpha: number;
-      if (ratio > 0.6) alpha = 0.85 * ((ratio - 0.6) / 0.4);
-      else if (ratio > 0.2) alpha = 0.4 * ((ratio - 0.2) / 0.4);
+      if (ratio > 0.7) alpha = 0.35 * ((ratio - 0.7) / 0.3);
       else alpha = 0;
-      vig.beginFill(0x0c0810, 0.85 - alpha);
+      vig.beginFill(0x0c0810, alpha);
       vig.drawEllipse(cx, cy, r * 1.1, r * 0.9);
       vig.endFill();
     }
